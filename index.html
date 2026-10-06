@@ -4,24 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#f5f7f4">
-    <meta name="description" content="休憩時間を自由に設定できる、やさしい休憩アプリ">
+    <meta name="description" content="5分間の休憩を優しく促す、やさしい休憩アプリ">
 
+    <!-- iOS PWA -->
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="ひとやすみ">
-    <!-- OGP (X, Facebook, LINE など) -->
-<meta property="og:title" content="ひとやすみ 🌿">
-<meta property="og:description" content="5分間の休憩を優しく促す、やさしい休憩アプリ。スマホの使いすぎを責めずに、そっと休憩を提案します。">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://harimaron-ops.github.io/hitoyasumi/">
-<meta property="og:image" content="https://harimaron-ops.github.io/hitoyasumi/icons/icon-512.png">
-<meta property="og:site_name" content="ひとやすみ">
 
-<!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="ひとやすみ 🌿">
-<meta name="twitter:description" content="5分間の休憩を優しく促す、やさしい休憩アプリ">
-<meta name="twitter:image" content="https://harimaron-ops.github.io/hitoyasumi/icons/icon-512.png">
+    <!-- OGP (SNS 用) -->
+    <meta property="og:title" content="ひとやすみ 🌿">
+    <meta property="og:description" content="5分間の休憩を優しく促す、やさしい休憩アプリ。スマホの使いすぎを責めずに、そっと休憩を提案します。">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://harimaron-ops.github.io/hitoyasumi/">
+    <meta property="og:image" content="https://harimaron-ops.github.io/hitoyasumi/icons/icon-512.png">
+    <meta property="og:site_name" content="ひとやすみ">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="ひとやすみ 🌿">
+    <meta name="twitter:description" content="5分間の休憩を優しく促す、やさしい休憩アプリ">
+    <meta name="twitter:image" content="https://harimaron-ops.github.io/hitoyasumi/icons/icon-512.png">
+
     <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
     <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -51,7 +54,6 @@
                 <div id="timer" class="timer" role="timer" aria-live="polite">05:00</div>
             </div>
 
-            <!-- 休憩時間プリセット -->
             <div class="duration-picker" role="group" aria-label="休憩時間">
                 <button class="duration-btn" type="button" data-min="1">1分</button>
                 <button class="duration-btn" type="button" data-min="3">3分</button>
@@ -60,7 +62,6 @@
                 <button class="duration-btn" type="button" data-min="15">15分</button>
             </div>
 
-            <!-- カスタム入力 -->
             <div class="custom-duration">
                 <label for="customMinutes">自由設定：</label>
                 <input type="number" id="customMinutes" min="1" max="120" value="5" inputmode="numeric">
@@ -70,12 +71,10 @@
 
             <p id="status" role="status">5分間、ゆっくり休みましょう。</p>
 
-            <!-- メイン操作 -->
             <button id="restButton" class="primary" type="button">5分休む</button>
             <button id="resetButton" class="primary" type="button" hidden>もう一度休む</button>
             <button id="continueButton" class="secondary" type="button">もう少し使う</button>
 
-            <!-- 設定系 -->
             <button id="notifyToggle" class="ghost" type="button" aria-pressed="false">
                 🔔 通知を有効にする
             </button>
@@ -87,9 +86,6 @@
             </button>
             <button id="scheduleButton" class="ghost" type="button">
                 ⏰ 通知スケジュール設定
-            </button>
-            <button id="installButton" class="ghost" type="button" hidden>
-                📱 ホーム画面に追加
             </button>
         </div>
 
@@ -157,7 +153,8 @@
                 <button id="alarmSaveBtn" class="primary" type="button">保存する</button>
             </div>
         </div>
-                <!-- iPhone 用：ホーム画面追加の案内 -->
+
+        <!-- iPhone 用：ホーム画面追加案内 -->
         <div id="iosHint" class="ios-hint" hidden>
             <button id="iosClose" class="ios-close" type="button" aria-label="閉じる">×</button>
             <p class="ios-hint-title">📱 ホーム画面に追加するともっと便利</p>
@@ -169,6 +166,7 @@
                 アプリのように起動でき、<strong>通知も使える</strong>ようになります。
             </p>
         </div>
+
     </main>
 
     <script src="script.js"></script>
