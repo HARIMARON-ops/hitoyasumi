@@ -45,8 +45,8 @@ async function notifyRestEnd() {
     const allClients = await self.clients.matchAll({ type: "window" });
     allClients.forEach((c) => c.postMessage({ type: "REST_END" }));
 
-    await self.registration.showNotification("休憩おつかれさま 🌿", {
-        body: "休憩時間が終わりました。",
+    await self.registration.showNotification("お疲れさま 🌿", {
+        body: "ゆっくり休めましたか？",
         icon: "icons/icon-192.png",
         badge: "icons/icon-192.png",
         tag: "rest-end",

@@ -515,7 +515,7 @@ function finishRest() {
     timer.textContent = "00:00";
     document.querySelector(".timer-wrap").classList.remove("pulse");
 
-    title.textContent = "休憩おつかれさま";
+    title.textContent = "お疲れさま 🌿";
     title.classList.add("fade-in");
     message.innerHTML = "自分のための時間を過ごしました。<br>また自分のペースで過ごしましょう。";
     message.classList.add("fade-in");
@@ -527,7 +527,7 @@ function finishRest() {
     continueButton.style.display = "block";
 
     showCelebration();
-    sendNotification("休憩おつかれさま 🌿", "休憩時間が終わりました。");
+    sendNotification("ゆっくり休めましたか？");
 }
 
 /* ---------- ストップ ---------- */
