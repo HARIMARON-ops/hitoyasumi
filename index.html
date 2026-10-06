@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
-    <meta name="description" content="雨音と呼吸ガイドで、心を整える休憩アプリ">
+    <meta name="description" content="雨音と4-7-8呼吸法で、心を整える休憩アプリ">
 
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,7 +12,7 @@
     <meta name="apple-mobile-web-app-title" content="ひとやすみ">
 
     <meta property="og:title" content="ひとやすみ 🌧">
-    <meta property="og:description" content="雨音と呼吸ガイドで、心を整える休憩アプリ">
+    <meta property="og:description" content="雨音と呼吸法で、心を整える休憩アプリ">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://harimaron-ops.github.io/hitoyasumi/">
     <meta property="og:image" content="https://harimaron-ops.github.io/hitoyasumi/icons/icon-512.png">
@@ -20,7 +20,7 @@
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="ひとやすみ 🌧">
-    <meta name="twitter:description" content="雨音と呼吸ガイドで、心を整える休憩アプリ">
+    <meta name="twitter:description" content="雨音と呼吸法で、心を整える休憩アプリ">
     <meta name="twitter:image" content="https://harimaron-ops.github.io/hitoyasumi/icons/icon-512.png">
 
     <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -44,62 +44,71 @@
 
         <div class="rest-card">
 
+            <!-- 呼吸法の説明 -->
+            <div class="breath-info" id="breathInfo">
+                <details>
+                    <summary>🌬 4-7-8 呼吸法とは？</summary>
+                    <div class="breath-info-body">
+                        <p>心を落ち着ける呼吸法です。副交感神経が優位になり、リラックスできます。</p>
+                        <ul>
+                            <li><strong>4秒</strong> 鼻から吸う</li>
+                            <li><strong>7秒</strong> 息を止める</li>
+                            <li><strong>8秒</strong> 口からゆっくり吐く</li>
+                        </ul>
+                        <p class="breath-info-note">休憩中は、円のアニメーションと数字に合わせて呼吸してみてください。</p>
+                    </div>
+                </details>
+            </div>
+
             <!-- タイマー -->
             <div class="timer-wrap" id="timerWrap">
-    <svg class="progress-ring" width="280" height="280" viewBox="0 0 280 280" aria-hidden="true">
-        <defs>
-            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#7ddc9a" />
-                <stop offset="50%" stop-color="#4ade80" />
-                <stop offset="100%" stop-color="#22d3ee" />
-            </linearGradient>
-            <radialGradient id="breathGlow" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stop-color="rgba(74, 222, 128, 0.5)" />
-                <stop offset="70%" stop-color="rgba(74, 222, 128, 0.05)" />
-                <stop offset="100%" stop-color="rgba(74, 222, 128, 0)" />
-            </radialGradient>
-        </defs>
-        <circle class="progress-ring__bg" cx="140" cy="140" r="128" />
-        <circle id="progressCircle" class="progress-ring__fg" cx="140" cy="140" r="128" />
-    </svg>
+                <svg class="progress-ring" width="280" height="280" viewBox="0 0 280 280" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#7ddc9a" />
+                            <stop offset="50%" stop-color="#4ade80" />
+                            <stop offset="100%" stop-color="#22d3ee" />
+                        </linearGradient>
+                    </defs>
+                    <circle class="progress-ring__bg" cx="140" cy="140" r="128" />
+                    <circle id="progressCircle" class="progress-ring__fg" cx="140" cy="140" r="128" />
+                </svg>
 
-    <!-- 呼吸ガイド: 波紋レイヤー -->
-    <div class="breath-ripple-layer">
-        <div class="ripple ripple-1" id="ripple1"></div>
-        <div class="ripple ripple-2" id="ripple2"></div>
-        <div class="ripple ripple-3" id="ripple3"></div>
-    </div>
+                <!-- 呼吸ガイド: 波紋 -->
+                <div class="breath-ripple-layer">
+                    <div class="ripple ripple-1"></div>
+                    <div class="ripple ripple-2"></div>
+                    <div class="ripple ripple-3"></div>
+                </div>
 
-    <!-- 呼吸ガイド: メイン円 -->
-    <div id="breathCircle" class="breath-circle" hidden></div>
+                <!-- 呼吸ガイド: メイン円 -->
+                <div id="breathCircle" class="breath-circle" hidden></div>
 
-    <!-- 呼吸ガイド: パーティクル -->
-    <div class="breath-particles" id="breathParticles"></div>
+                <!-- 呼吸ガイド: パーティクル -->
+                <div class="breath-particles" id="breathParticles"></div>
 
-    <!-- カウントダウン -->
-    <div id="breathCountdown" class="breath-countdown" hidden></div>
+                <!-- カウントダウン -->
+                <div id="breathCountdown" class="breath-countdown" hidden></div>
 
-    <!-- タイマー -->
-    <div id="timer" class="timer" role="timer" aria-live="polite">05:00</div>
-        </div>
+                <!-- タイマー -->
+                <div id="timer" class="timer" role="timer" aria-live="polite">05:00</div>
+            </div>
 
-            <!-- 環境音の選択 -->
-            <div class="sound-picker" id="soundPicker" role="group" aria-label="環境音">
-                <button class="sound-btn" type="button" data-sound="rain">
+            <!-- 呼吸ガイド情報 -->
+            <div id="breathPanel" class="breath-panel" hidden>
+                <div class="breath-phase-row">
+                    <span class="breath-phase-dot" id="phaseDot"></span>
+                    <span class="breath-phase-label" id="breathPhase">吸う</span>
+                </div>
+                <p class="breath-instruction" id="breathInstruction">鼻からゆっくり吸って…</p>
+                <p class="breath-counter" id="breathCounter">1回目</p>
+            </div>
+
+            <!-- 環境音（雨のみ） -->
+            <div class="sound-picker single" id="soundPicker" role="group" aria-label="環境音">
+                <button class="sound-btn active" type="button" data-sound="rain">
                     <span class="sound-icon">🌧</span>
-                    <span class="sound-name">雨</span>
-                </button>
-                <button class="sound-btn" type="button" data-sound="wave">
-                    <span class="sound-icon">🌊</span>
-                    <span class="sound-name">波</span>
-                </button>
-                <button class="sound-btn" type="button" data-sound="fire">
-                    <span class="sound-icon">🔥</span>
-                    <span class="sound-name">焚き火</span>
-                </button>
-                <button class="sound-btn active" type="button" data-sound="none">
-                    <span class="sound-icon">🔇</span>
-                    <span class="sound-name">なし</span>
+                    <span class="sound-name">雨音を止める</span>
                 </button>
             </div>
 
