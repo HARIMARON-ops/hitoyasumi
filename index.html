@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#f5f7f4">
+    <meta name="description" content="休憩時間を自由に設定できる、やさしい休憩アプリ">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ひとやすみ">
+
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+    <title>ひとやすみ</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+
+<body>
+    <main class="container">
+
+        <p class="greeting">今日もおつかれさま</p>
+        <h1 id="title">少し、休みませんか？</h1>
+        <p id="message" class="message">
+            スマホを使うことは悪いことではありません。<br>
+            ときどき、自分のために休む時間を作ってみましょう。
+        </p>
+
+        <div class="rest-card">
+
+            <div class="timer-wrap">
+                <svg class="progress-ring" width="220" height="220" viewBox="0 0 220 220" aria-hidden="true">
+                    <circle class="progress-ring__bg" cx="110" cy="110" r="100" />
+                    <circle id="progressCircle" class="progress-ring__fg" cx="110" cy="110" r="100" />
+                </svg>
+                <div id="timer" class="timer" role="timer" aria-live="polite">05:00</div>
+            </div>
+
+            <!-- 休憩時間プリセット -->
+            <div class="duration-picker" role="group" aria-label="休憩時間">
+                <button class="duration-btn" type="button" data-min="1">1分</button>
+                <button class="duration-btn" type="button" data-min="3">3分</button>
+                <button class="duration-btn active" type="button" data-min="5">5分</button>
+                <button class="duration-btn" type="button" data-min="10">10分</button>
+                <button class="duration-btn" type="button" data-min="15">15分</button>
+            </div>
+
+            <!-- カスタム入力 -->
+            <div class="custom-duration">
+                <label for="customMinutes">自由設定：</label>
+                <input type="number" id="customMinutes" min="1" max="120" value="5" inputmode="numeric">
+                <span>分</span>
+                <button id="applyCustom" class="mini-btn" type="button">適用</button>
+            </div>
+
+            <p id="status" role="status">5分間、ゆっくり休みましょう。</p>
+
+            <!-- メイン操作 -->
+            <button id="restButton" class="primary" type="button">5分休む</button>
+            <button id="resetButton" class="primary" type="button" hidden>もう一度休む</button>
+            <button id="continueButton" class="secondary" type="button">もう少し使う</button>
+
+            <!-- 設定系 -->
+            <button id="notifyToggle" class="ghost" type="button" aria-pressed="false">
+                🔔 通知を有効にする
+            </button>
+            <button id="alarmToggle" class="ghost" type="button" aria-pressed="false">
+                🔕 アラームをオンにする
+            </button>
+            <button id="alarmSettingsBtn" class="ghost" type="button">
+                🎵 アラーム音の設定
+            </button>
+            <button id="scheduleButton" class="ghost" type="button">
+                ⏰ 通知スケジュール設定
+            </button>
+            <button id="installButton" class="ghost" type="button" hidden>
+                📱 ホーム画面に追加
+            </button>
+        </div>
+
+        <!-- 通知スケジュールモーダル -->
+        <div id="scheduleModal" class="modal" hidden>
+            <div class="modal-content">
+                <button class="modal-close" type="button" data-close="scheduleModal" aria-label="閉じる">×</button>
+                <h2 class="modal-title">⏰ 通知スケジュール</h2>
+                <p class="modal-desc">「この時刻に通知してほしい」を個別に追加できます。</p>
+
+                <div class="times-list-header">
+                    <span>通知する時刻</span>
+                    <button id="addTimeBtn" class="mini-btn" type="button">＋ 追加</button>
+                </div>
+                <div id="timesList" class="times-list"></div>
+
+                <div class="quick-add">
+                    <p class="quick-add-label">クイック追加</p>
+                    <div class="quick-btns">
+                        <button class="quick-btn" type="button" data-preset="hourly">毎時</button>
+                        <button class="quick-btn" type="button" data-preset="2hours">2時間ごと</button>
+                        <button class="quick-btn" type="button" data-preset="work">仕事の区切り</button>
+                        <button class="quick-btn" type="button" data-preset="clear">クリア</button>
+                    </div>
+                </div>
+
+                <div class="toggle-row">
+                    <span>スケジュール通知を有効にする</span>
+                    <label class="switch">
+                        <input type="checkbox" id="scheduleEnabled">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <p id="scheduleInfo" class="schedule-info"></p>
+
+                <button id="scheduleSave" class="primary" type="button">保存する</button>
+            </div>
+        </div>
+
+        <!-- アラーム設定モーダル -->
+        <div id="alarmModal" class="modal" hidden>
+            <div class="modal-content">
+                <button class="modal-close" type="button" data-close="alarmModal" aria-label="閉じる">×</button>
+                <h2 class="modal-title">🎵 アラーム音の設定</h2>
+                <p class="modal-desc">休憩が終わったときに鳴る音を選べます。</p>
+
+                <div class="alarm-list" id="alarmList"></div>
+
+                <label class="field">
+                    <span>音量</span>
+                    <input type="range" id="alarmVolume" min="0" max="100" value="60">
+                </label>
+                <p class="volume-label"><span id="volumeValue">60</span>%</p>
+
+                <div class="toggle-row">
+                    <span>バイブレーション</span>
+                    <label class="switch">
+                        <input type="checkbox" id="vibrateEnabled" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
+                <button id="alarmTestBtn" class="secondary" type="button">🎧 試し聴き</button>
+                <button id="alarmSaveBtn" class="primary" type="button">保存する</button>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="script.js"></script>
+    <script>
+    if ("serviceWorker" in navigator && location.protocol !== "file:") {
+        window.addEventListener("load", () => {
+            navigator.serviceWorker.register("sw.js")
+                .then(reg => console.log("SW registered:", reg.scope))
+                .catch(err => console.error("SW registration failed:", err));
+        });
+    }
+    </script>
+</body>
+</html>
