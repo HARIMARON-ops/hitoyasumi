@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 {
   "name": "ひとやすみ",
   "short_name": "ひとやすみ",
@@ -13,4 +14,21 @@
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
+=======
+{
+  "name": "ひとやすみ",
+  "short_name": "ひとやすみ",
+  "description": "休憩時間を自由に設定できる、やさしい休憩アプリ",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f7f4",
+  "theme_color": "#f5f7f4",
+  "lang": "ja",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+>>>>>>> 86e3265752f715b2c0d2c87a0174cff5dbd16a77
 }
