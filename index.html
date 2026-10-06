@@ -6,13 +6,11 @@
     <meta name="theme-color" content="#f5f7f4">
     <meta name="description" content="5分間の休憩を優しく促す、やさしい休憩アプリ">
 
-    <!-- iOS PWA -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="ひとやすみ">
 
-    <!-- OGP (SNS 用) -->
     <meta property="og:title" content="ひとやすみ 🌿">
     <meta property="og:description" content="5分間の休憩を優しく促す、やさしい休憩アプリ。スマホの使いすぎを責めずに、そっと休憩を提案します。">
     <meta property="og:type" content="website">
@@ -47,11 +45,17 @@
         <div class="rest-card">
 
             <div class="timer-wrap">
-                <svg class="progress-ring" width="220" height="220" viewBox="0 0 220 220" aria-hidden="true">
-                    <circle class="progress-ring__bg" cx="110" cy="110" r="100" />
-                    <circle id="progressCircle" class="progress-ring__fg" cx="110" cy="110" r="100" />
+                <svg class="progress-ring" width="240" height="240" viewBox="0 0 240 240" aria-hidden="true">
+            <defs>
+                <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#9dd8a0" />
+                <stop offset="100%" stop-color="#5c9c68" />
+                </linearGradient>
+            </defs>
+                <circle class="progress-ring__bg" cx="120" cy="120" r="108" />
+            <circle id="progressCircle" class="progress-ring__fg" cx="120" cy="120" r="108" />
                 </svg>
-                <div id="timer" class="timer" role="timer" aria-live="polite">05:00</div>
+            <div id="timer" class="timer" role="timer" aria-live="polite">05:00</div>
             </div>
 
             <div class="duration-picker" role="group" aria-label="休憩時間">
@@ -72,7 +76,7 @@
             <p id="status" role="status">5分間、ゆっくり休みましょう。</p>
 
             <button id="restButton" class="primary" type="button">5分休む</button>
-            <button id="resetButton" class="primary" type="button" hidden>もう一度休む</button>
+            <button id="resetButton" class="primary" type="button" hidden>続きから再開</button>
             <button id="stopButton" class="secondary" type="button" hidden>ストップ</button>
             <button id="continueButton" class="secondary" type="button">もう少し使う</button>
 
