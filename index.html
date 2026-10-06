@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#f5f7f4">
+    <meta name="theme-color" content="#000000">
     <meta name="description" content="5分間の休憩を優しく促す、やさしい休憩アプリ">
 
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ひとやすみ">
 
-    <meta property="og:title" content="ひとやすみ 🌿">
-    <meta property="og:description" content="5分間の休憩を優しく促す、やさしい休憩アプリ。スマホの使いすぎを責めずに、そっと休憩を提案します。">
+    <meta property="og:title" content="ひとやすみ 🖤">
+    <meta property="og:description" content="5分間の休憩を優しく促す、やさしい休憩アプリ">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://harimaron-ops.github.io/hitoyasumi/">
     <meta property="og:image" content="https://harimaron-ops.github.io/hitoyasumi/icons/icon-512.png">
     <meta property="og:site_name" content="ひとやすみ">
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="ひとやすみ 🌿">
+    <meta name="twitter:title" content="ひとやすみ 🖤">
     <meta name="twitter:description" content="5分間の休憩を優しく促す、やさしい休憩アプリ">
     <meta name="twitter:image" content="https://harimaron-ops.github.io/hitoyasumi/icons/icon-512.png">
 
@@ -35,21 +35,40 @@
 <body>
     <main class="container">
 
-        <p class="greeting">今日もおつかれさま</p>
+        <p class="greeting" id="greeting">今日もおつかれさま</p>
         <h1 id="title">少し、休みませんか？</h1>
         <p id="message" class="message">
             スマホを使うことは悪いことではありません。<br>
             ときどき、自分のために休む時間を作ってみましょう。
         </p>
 
+        <!-- 統計バー -->
+        <div class="stats-bar" id="statsBar">
+            <div class="stat">
+                <span class="stat-value" id="todayCount">0</span>
+                <span class="stat-label">今日</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat">
+                <span class="stat-value" id="totalCount">0</span>
+                <span class="stat-label">累計</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat">
+                <span class="stat-value" id="streakCount">0</span>
+                <span class="stat-label">連続日数</span>
+            </div>
+        </div>
+
         <div class="rest-card">
 
-            <div class="timer-wrap">
+            <div class="timer-wrap" id="timerWrap">
                 <svg class="progress-ring" width="240" height="240" viewBox="0 0 240 240" aria-hidden="true">
                     <defs>
                         <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#9dd8a0" />
-                            <stop offset="100%" stop-color="#5c9c68" />
+                            <stop offset="0%" stop-color="#7ddc9a" />
+                            <stop offset="50%" stop-color="#4ade80" />
+                            <stop offset="100%" stop-color="#22d3ee" />
                         </linearGradient>
                     </defs>
                     <circle class="progress-ring__bg" cx="120" cy="120" r="108" />
@@ -170,6 +189,11 @@
             <p class="ios-hint-note">
                 アプリのように起動でき、<strong>通知も使える</strong>ようになります。
             </p>
+        </div>
+
+        <!-- 完了時の祝福エフェクト -->
+        <div id="celebration" class="celebration" hidden>
+            <div class="celebration-text">🌿 おつかれさま</div>
         </div>
 
     </main>

@@ -715,4 +715,105 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
     });
 }
 
+/* =========================================================
+   統計（今日・累計・連続日数）
+   ========================================================= */
+function getTodayKey() {
+    return "stats_" + new Date().toDateString();
+}
+
+function loadStats() {
+    const todayKey = getTodayKey();
+    const today = parseInt(localStorage.getItem(todayKey) || "0", 10);
+    const total = parseInt(localStorage.getItem("stats_total") || "0", 10);
+    const streak = parseInt(localStorage.getItem("stats_streak") || "0", 10);
+    const lastDate = localStorage.getItem("stats_lastDate") || "";
+
+    // 連続日数の計算
+    const todayStr = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    let displayStreak = streak;
+    if (lastDate !== todayStr && lastDate !== yesterday) {
+        displayStreak = 0;   // 途切れた
+    }
+
+    if (todayCountEl) todayCountEl.textContent = today;
+    if (totalCountEl) totalCountEl.textContent = total;
+    if (streakCountEl) streakCountEl.textContent = displayStreak;
+}
+
+function incrementStats() {
+    const todayKey = getTodayKey();
+    const today = parseInt(localStorage.getItem(todayKey) || "0", 10) + 1;
+    const total = parseInt(localStorage.getItem("stats_total") || "0", 10) + 1;
+    const todayStr = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    const lastDate = localStorage.getItem("stats_lastDate") || "";
+
+    let streak = parseInt(localStorage.getItem("stats_streak") || "0", 10);
+
+    if (lastDate === todayStr) {
+        // 同じ日に複数回 → ストリークはそのまま
+    } else if (lastDate === yesterday) {
+        streak += 1;
+    } else {
+        streak = 1;
+    }
+
+    localStorage.setItem(todayKey, String(today));
+    localStorage.setItem("stats_total", String(total));
+    localStorage.setItem("stats_streak", String(streak));
+    localStorage.setItem("stats_lastDate", todayStr);
+
+    loadStats();
+}
+
+/* =========================================================
+   時間帯ごとの挨拶（NEW）
+   ========================================================= */
+function updateGreeting() {
+    const hour = new Date().getHours();
+    let text = "今日もおつかれさま";
+    if (hour >= 5 && hour < 11) {
+        text = "おはようございます";
+    } else if (hour >= 11 && hour < 14) {
+        text = "お昼のひとやすみ";
+    } else if (hour >= 14 && hour < 18) {
+        text = "午後のひとやすみ";
+    } else if (hour >= 18 && hour < 22) {
+        text = "夜のひとやすみ";
+    } else {
+        text = "遅くまでおつかれさま";
+    }
+    if (greetingEl) greetingEl.textContent = text;
+}
+
+/* =========================================================
+   祝福エフェクト（NEW）
+   ========================================================= */
+function showCelebration() {
+    if (!celebration) return;
+    celebration.hidden = false;
+    // 1.5秒後に自動で消す
+    setTimeout(() => { celebration.hidden = true; }, 1500);
+}
+
+/* =========================================================
+   タイマー円をタップで開始（NEW）
+   ========================================================= */
+timerWrap?.addEventListener("click", () => {
+    if (tickId === null && restButton && !restButton.hidden) {
+        startRest(false);
+    }
+});
+
+/* =========================================================
+   初期化時に呼ぶ
+   ========================================================= */
+loadStats();
+updateGreeting();
+
+// 1時間ごとに挨拶を更新
+setInterval(updateGreeting, 60 * 60 * 1000);
+
 console.log("[ひとやすみ] 起動完了");
