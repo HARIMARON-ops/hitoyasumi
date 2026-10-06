@@ -609,3 +609,13 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     50%      { transform: scale(1.03); }
 }
 .pulse { animation: pulse 2s ease-in-out infinite; }
+
+#stopButton {
+    color: #c66;
+    border: 1.5px solid rgba(204, 102, 102, 0.3);
+    margin-top: 8px;
+}
+
+#stopButton:hover:not(:disabled) {
+    background: rgba(204, 102, 102, 0.08);
+}

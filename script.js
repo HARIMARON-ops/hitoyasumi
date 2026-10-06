@@ -1,5 +1,5 @@
 /* =========================================================
-   ひとやすみ - メインスクリプト (Wake Lock 対応版)
+   ひとやすみ - メインスクリプト (ストップ機能 + Wake Lock 強化版)
    ========================================================= */
 
 /* ---------- 要素取得 ---------- */
@@ -11,6 +11,7 @@ const progressCircle  = document.getElementById("progressCircle");
 
 const restButton      = document.getElementById("restButton");
 const resetButton     = document.getElementById("resetButton");
+const stopButton      = document.getElementById("stopButton");
 const continueButton  = document.getElementById("continueButton");
 const notifyToggle    = document.getElementById("notifyToggle");
 const scheduleButton  = document.getElementById("scheduleButton");
@@ -37,7 +38,7 @@ const vibrateEnabled   = document.getElementById("vibrateEnabled");
 const alarmTestBtn     = document.getElementById("alarmTestBtn");
 const alarmSaveBtn     = document.getElementById("alarmSaveBtn");
 
-const iosHint = document.getElementById("iosHint");
+const iosHint  = document.getElementById("iosHint");
 const iosClose = document.getElementById("iosClose");
 
 /* ---------- 定数 ---------- */
@@ -52,7 +53,8 @@ let alarmEnabled     = false;
 let alarmVolumeValue = 0.6;
 let selectedAlarm    = "wood";
 let audioCtx         = null;
-let wakeLock         = null;   // ← 画面スリープ防止用
+let wakeLock         = null;
+let wakeLockRetryId  = null;   // Wake Lock 定期チェック用
 
 if (progressCircle) progressCircle.style.strokeDasharray = CIRCUMFERENCE;
 
@@ -69,25 +71,25 @@ function isInStandaloneMode() {
 }
 
 /* =========================================================
-   Screen Wake Lock（休憩中は画面をスリープさせない）
+   Screen Wake Lock（画面スリープ防止・強化版）
    ========================================================= */
 async function requestWakeLock() {
     if (!("wakeLock" in navigator)) {
-        console.log("[WakeLock] この端末は非対応");
         return;
     }
     if (wakeLock) return;   // すでに取得済み
 
     try {
         wakeLock = await navigator.wakeLock.request("screen");
-        console.log("[WakeLock] 画面スリープ防止 ON");
+        console.log("[WakeLock] ON");
 
         wakeLock.addEventListener("release", () => {
-            console.log("[WakeLock] 解除されました");
+            console.log("[WakeLock] 解除 (OS による自動解除)");
             wakeLock = null;
         });
     } catch (err) {
         console.warn("[WakeLock] 取得失敗:", err);
+        wakeLock = null;
     }
 }
 
@@ -96,19 +98,35 @@ async function releaseWakeLock() {
     try {
         await wakeLock.release();
         wakeLock = null;
-        console.log("[WakeLock] 画面スリープ防止 OFF");
+        console.log("[WakeLock] OFF");
     } catch (err) {
         console.warn("[WakeLock] 解除失敗:", err);
+        wakeLock = null;
     }
 }
 
-// アプリが前面に戻ったとき、休憩中なら再度取得
-document.addEventListener("visibilitychange", async () => {
-    if (document.visibilityState === "visible" && tickId !== null) {
-        console.log("[WakeLock] 復帰時に再取得");
-        await requestWakeLock();
+// 休憩中は定期的に Wake Lock が生きているかチェックし、切れていたら再取得
+function startWakeLockWatchdog() {
+    stopWakeLockWatchdog();
+    wakeLockRetryId = setInterval(() => {
+        if (tickId === null) {
+            // 休憩が終わっていたら watchdog 停止
+            stopWakeLockWatchdog();
+            return;
+        }
+        if (wakeLock === null) {
+            console.log("[WakeLock] 切れていたので再取得");
+            requestWakeLock();
+        }
+    }, 1000);   // 1秒ごとにチェック
+}
+
+function stopWakeLockWatchdog() {
+    if (wakeLockRetryId) {
+        clearInterval(wakeLockRetryId);
+        wakeLockRetryId = null;
     }
-});
+}
 
 /* =========================================================
    モーダル
@@ -219,7 +237,7 @@ applyCustom?.addEventListener("click", () => {
 });
 
 /* =========================================================
-   タイマー
+   タイマー表示
    ========================================================= */
 function updateTimer() {
     let remaining = REST_DURATION;
@@ -235,6 +253,9 @@ function updateTimer() {
     progressCircle.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
 }
 
+/* =========================================================
+   休憩開始
+   ========================================================= */
 async function startRest() {
     if (tickId !== null) return;
 
@@ -246,6 +267,7 @@ async function startRest() {
     restButton.disabled = true;
     restButton.hidden = false;
     resetButton.hidden = true;
+    stopButton.hidden = false;              // ★ ストップボタン表示
     continueButton.style.display = "none";
     document.querySelector(".timer-wrap").classList.add("pulse");
 
@@ -256,8 +278,9 @@ async function startRest() {
         "終わったらやさしくお知らせします。";
     message.classList.remove("fade-in");
 
-    // ★ 画面スリープ防止を ON
+    // ★ 画面スリープ防止 ON + watchdog 開始
     await requestWakeLock();
+    startWakeLockWatchdog();
 
     if ("serviceWorker" in navigator && location.protocol !== "file:") {
         try {
@@ -285,13 +308,17 @@ function startTicking() {
     updateTimer();
 }
 
+/* =========================================================
+   休憩完了（最後まで到達）
+   ========================================================= */
 function finishRest() {
     if (tickId) { clearInterval(tickId); tickId = null; }
     endTime = null;
     localStorage.removeItem("restEndTime");
 
-    // ★ 画面スリープ防止を OFF
+    // ★ Wake Lock OFF + watchdog 停止
     releaseWakeLock();
+    stopWakeLockWatchdog();
 
     timer.textContent = "00:00";
     document.querySelector(".timer-wrap").classList.remove("pulse");
@@ -308,6 +335,7 @@ function finishRest() {
     restButton.hidden = true;
     restButton.disabled = false;
     resetButton.hidden = false;
+    stopButton.hidden = true;
     continueButton.style.display = "block";
 
     sendNotification(
@@ -322,15 +350,78 @@ function finishRest() {
     }
 }
 
+/* =========================================================
+   休憩をストップ（途中で終了）
+   ========================================================= */
+function stopRest() {
+    if (tickId === null) return;
+
+    // タイマー停止
+    clearInterval(tickId);
+    tickId = null;
+    endTime = null;
+    localStorage.removeItem("restEndTime");
+
+    // Wake Lock OFF + watchdog 停止
+    releaseWakeLock();
+    stopWakeLockWatchdog();
+
+    document.querySelector(".timer-wrap").classList.remove("pulse");
+
+    title.textContent = "休憩を終わりました";
+    title.classList.add("fade-in");
+    message.innerHTML =
+        "途中でやめても大丈夫です。<br>" +
+        "また休みたくなったときに、ここへ戻ってきてください。";
+    message.classList.add("fade-in");
+
+    status.textContent = "おつかれさまでした 🌿";
+    restButton.hidden = true;
+    resetButton.hidden = false;
+    stopButton.hidden = true;
+    continueButton.style.display = "block";
+
+    // タイマー表示をリセット（次の休憩の初期値に戻す）
+    timer.textContent =
+        String(Math.floor(REST_DURATION / 60)).padStart(2, "0") + ":" +
+        String(REST_DURATION % 60).padStart(2, "0");
+    progressCircle.style.strokeDashoffset = 0;
+}
+
+/* ---------- ボタンイベント ---------- */
 restButton?.addEventListener("click", startRest);
 
 resetButton?.addEventListener("click", () => {
     resetButton.hidden = true;
     restButton.hidden = false;
     continueButton.style.display = "block";
+    stopButton.hidden = true;
     startRest();
 });
 
+stopButton?.addEventListener("click", stopRest);
+
+continueButton?.addEventListener("click", () => {
+    title.textContent = "わかりました";
+    title.classList.add("fade-in");
+    message.innerHTML =
+        "スマホを使うことが悪いわけではありません。<br>" +
+        "また休みたくなったときに、ここへ戻ってきてください。";
+    message.classList.add("fade-in");
+    status.textContent = "自分のペースでどうぞ。";
+    restButton.style.display = "none";
+    resetButton.style.display = "none";
+    stopButton.style.display = "none";
+    continueButton.style.display = "none";
+    notifyToggle.style.display = "none";
+    alarmToggle.style.display = "none";
+    alarmSettingsBtn.style.display = "none";
+    scheduleButton.style.display = "none";
+});
+
+/* =========================================================
+   復帰チェック
+   ========================================================= */
 function checkRestOnReturn() {
     const saved = localStorage.getItem("restEndTime");
     if (!saved) return;
@@ -346,26 +437,11 @@ function checkRestOnReturn() {
         restButton.disabled = true;
         continueButton.style.display = "none";
         resetButton.hidden = true;
+        stopButton.hidden = false;
         startTicking();
+        startWakeLockWatchdog();
     }
 }
-
-continueButton?.addEventListener("click", () => {
-    title.textContent = "わかりました";
-    title.classList.add("fade-in");
-    message.innerHTML =
-        "スマホを使うことが悪いわけではありません。<br>" +
-        "また休みたくなったときに、ここへ戻ってきてください。";
-    message.classList.add("fade-in");
-    status.textContent = "自分のペースでどうぞ。";
-    restButton.style.display = "none";
-    resetButton.style.display = "none";
-    continueButton.style.display = "none";
-    notifyToggle.style.display = "none";
-    alarmToggle.style.display = "none";
-    alarmSettingsBtn.style.display = "none";
-    scheduleButton.style.display = "none";
-});
 
 /* =========================================================
    通知時刻リスト
@@ -721,7 +797,7 @@ alarmToggle?.addEventListener("click", () => {
 });
 
 /* =========================================================
-   iPhone 用：ホーム画面追加の案内バナー
+   iPhone 用：ホーム画面追加案内
    ========================================================= */
 function shouldShowIosHint() {
     if (!isiOS()) return false;
@@ -731,9 +807,7 @@ function shouldShowIosHint() {
 }
 
 if (shouldShowIosHint() && iosHint) {
-    setTimeout(() => {
-        iosHint.hidden = false;
-    }, 3000);
+    setTimeout(() => { iosHint.hidden = false; }, 3000);
 }
 
 iosClose?.addEventListener("click", (e) => {
@@ -755,13 +829,19 @@ document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
         checkRestOnReturn();
         checkScheduledReminders();
-        if (tickId !== null) requestWakeLock();
+        // 休憩中なら Wake Lock を再取得
+        if (tickId !== null) {
+            console.log("[WakeLock] 復帰時に再取得");
+            requestWakeLock();
+        }
     }
 });
 window.addEventListener("focus", () => {
     checkRestOnReturn();
     checkScheduledReminders();
-    if (tickId !== null) requestWakeLock();
+    if (tickId !== null) {
+        requestWakeLock();
+    }
 });
 
 /* =========================================================
