@@ -1,4 +1,4 @@
-const CACHE_NAME = "hitoyasumi-v43";
+const CACHE_NAME = "hitoyasumi-v50";
 const ASSETS = [
     "./",
     "./index.html",
@@ -50,6 +50,7 @@ async function notifyRestEnd() {
         icon: "icons/icon-192.png",
         badge: "icons/icon-192.png",
         tag: "rest-end",
+        silent: true,
     });
 }
 
