@@ -1,4 +1,4 @@
-const CACHE_NAME = "hitoyasumi-v60";
+const CACHE_NAME = "hitoyasumi-v62";
 const ASSETS = [
     "./",
     "./index.html",
