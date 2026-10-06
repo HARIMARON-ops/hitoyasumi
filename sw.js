@@ -1,4 +1,4 @@
-const CACHE_NAME = "hitoyasumi-v39";
+const CACHE_NAME = "hitoyasumi-v41";
 const ASSETS = [
     "./",
     "./index.html",
@@ -36,10 +36,7 @@ self.addEventListener("message", (event) => {
     if (type === "SCHEDULE_REST_END") {
         if (restTimeoutId) clearTimeout(restTimeoutId);
         const delay = endTime - Date.now();
-        if (delay <= 0) {
-            notifyRestEnd();
-            return;
-        }
+        if (delay <= 0) { notifyRestEnd(); return; }
         restTimeoutId = setTimeout(() => notifyRestEnd(), delay);
     }
 });

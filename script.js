@@ -2,7 +2,6 @@
    ひとやすみ - メインスクリプト (完全版)
    ========================================================= */
 
-/* ---------- 要素取得 ---------- */
 const timer           = document.getElementById("timer");
 const status          = document.getElementById("status");
 const title           = document.getElementById("title");
@@ -41,10 +40,8 @@ const alarmSaveBtn     = document.getElementById("alarmSaveBtn");
 const iosHint  = document.getElementById("iosHint");
 const iosClose = document.getElementById("iosClose");
 
-/* ---------- 定数 ---------- */
 const CIRCUMFERENCE = 2 * Math.PI * 108;
 
-/* ---------- 状態 ---------- */
 let REST_DURATION    = 5 * 60;
 let endTime          = null;
 let tickId           = null;
@@ -59,9 +56,6 @@ let pausedTimeLeft   = null;
 
 if (progressCircle) progressCircle.style.strokeDasharray = CIRCUMFERENCE;
 
-/* =========================================================
-   端末判定
-   ========================================================= */
 function isiOS() {
     return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
            (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
@@ -71,14 +65,11 @@ function isInStandaloneMode() {
            window.matchMedia("(display-mode: standalone)").matches;
 }
 
-/* =========================================================
-   Screen Wake Lock
-   ========================================================= */
+/* ---------- Wake Lock ---------- */
 async function requestWakeLock() {
     if (!("wakeLock" in navigator)) return;
     if (wakeLock) return;
     if (document.visibilityState !== "visible") return;
-
     try {
         wakeLock = await navigator.wakeLock.request("screen");
         console.log("[WakeLock] ON");
@@ -88,14 +79,13 @@ async function requestWakeLock() {
         });
     } catch (err) {
         if (err.name === "NotAllowedError") {
-            console.log("[WakeLock] ページ非表示のため保留");
+            console.log("[WakeLock] 保留");
         } else {
             console.warn("[WakeLock] 失敗:", err);
         }
         wakeLock = null;
     }
 }
-
 async function releaseWakeLock() {
     if (!wakeLock) return;
     try {
@@ -107,31 +97,21 @@ async function releaseWakeLock() {
         wakeLock = null;
     }
 }
-
 function startWakeLockWatchdog() {
     stopWakeLockWatchdog();
     wakeLockRetryId = setInterval(() => {
-        if (tickId === null) {
-            stopWakeLockWatchdog();
-            return;
-        }
+        if (tickId === null) { stopWakeLockWatchdog(); return; }
         if (wakeLock === null && document.visibilityState === "visible") {
             console.log("[WakeLock] 再取得");
             requestWakeLock();
         }
     }, 1000);
 }
-
 function stopWakeLockWatchdog() {
-    if (wakeLockRetryId) {
-        clearInterval(wakeLockRetryId);
-        wakeLockRetryId = null;
-    }
+    if (wakeLockRetryId) { clearInterval(wakeLockRetryId); wakeLockRetryId = null; }
 }
 
-/* =========================================================
-   モーダル
-   ========================================================= */
+/* ---------- モーダル ---------- */
 document.addEventListener("click", (e) => {
     const closeBtn = e.target.closest && e.target.closest("[data-close]");
     if (closeBtn) {
@@ -147,9 +127,7 @@ document.addEventListener("click", (e) => {
     }
 });
 
-/* =========================================================
-   通知
-   ========================================================= */
+/* ---------- 通知 ---------- */
 async function requestNotification() {
     if (!("Notification" in window)) {
         alert("このブラウザは通知に対応していません。");
@@ -167,12 +145,10 @@ async function requestNotification() {
     const perm = await Notification.requestPermission();
     return perm === "granted";
 }
-
 async function sendNotification(t, body, options = {}) {
     if (!notifyEnabled) return;
     if (!("Notification" in window) || Notification.permission !== "granted") return;
     if (isiOS() && !isInStandaloneMode()) return;
-
     const opts = {
         body,
         icon: "icons/icon-192.png",
@@ -180,7 +156,6 @@ async function sendNotification(t, body, options = {}) {
         tag: options.tag || "hitoyasumi-" + Date.now(),
         ...options,
     };
-
     try {
         if ("serviceWorker" in navigator && location.protocol !== "file:") {
             const reg = await navigator.serviceWorker.ready;
@@ -192,7 +167,6 @@ async function sendNotification(t, body, options = {}) {
         console.warn("[通知] 失敗:", err);
     }
 }
-
 notifyToggle?.addEventListener("click", async () => {
     const ok = await requestNotification();
     notifyEnabled = ok;
@@ -201,9 +175,7 @@ notifyToggle?.addEventListener("click", async () => {
     localStorage.setItem("notifyEnabled", ok ? "1" : "0");
 });
 
-/* =========================================================
-   休憩時間
-   ========================================================= */
+/* ---------- 休憩時間 ---------- */
 function setDuration(seconds) {
     if (tickId !== null) return;
     REST_DURATION = seconds;
@@ -214,7 +186,6 @@ function setDuration(seconds) {
     restButton.textContent = `${min}分休む`;
     localStorage.setItem("restDuration", String(seconds));
 }
-
 durationButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
         durationButtons.forEach((b) => b.classList.remove("active"));
@@ -223,7 +194,6 @@ durationButtons.forEach((btn) => {
         setDuration(parseInt(btn.dataset.min, 10) * 60);
     });
 });
-
 applyCustom?.addEventListener("click", () => {
     let m = parseInt(customMinutes.value, 10);
     if (isNaN(m) || m < 1) m = 1;
@@ -233,9 +203,7 @@ applyCustom?.addEventListener("click", () => {
     setDuration(m * 60);
 });
 
-/* =========================================================
-   タイマー表示
-   ========================================================= */
+/* ---------- タイマー表示 ---------- */
 function updateTimer() {
     let remaining = REST_DURATION;
     if (endTime) {
@@ -245,19 +213,14 @@ function updateTimer() {
     }
     const m = Math.floor(remaining / 60);
     const s = remaining % 60;
-    timer.textContent =
-        String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
-
+    timer.textContent = String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
     const progress = remaining / REST_DURATION;
     progressCircle.style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
 }
 
-/* =========================================================
-   休憩開始
-   ========================================================= */
+/* ---------- 休憩開始 ---------- */
 async function startRest(fromResume = false) {
     if (tickId !== null) return;
-
     let duration;
     if (fromResume && pausedTimeLeft !== null && pausedTimeLeft > 0) {
         duration = pausedTimeLeft;
@@ -265,7 +228,6 @@ async function startRest(fromResume = false) {
     } else {
         duration = REST_DURATION;
     }
-
     endTime = Date.now() + duration * 1000;
     localStorage.setItem("restEndTime", endTime);
     localStorage.setItem("restDurationUsed", String(duration));
@@ -280,9 +242,7 @@ async function startRest(fromResume = false) {
 
     title.textContent = "休憩中…";
     title.classList.remove("fade-in");
-    message.innerHTML =
-        "自分のための時間を過ごしましょう。<br>" +
-        "終わったらやさしくお知らせします。";
+    message.innerHTML = "自分のための時間を過ごしましょう。<br>終わったらやさしくお知らせします。";
     message.classList.remove("fade-in");
 
     await requestWakeLock();
@@ -291,16 +251,9 @@ async function startRest(fromResume = false) {
     if ("serviceWorker" in navigator && location.protocol !== "file:") {
         try {
             const reg = await navigator.serviceWorker.ready;
-            reg.active?.postMessage({
-                type: "SCHEDULE_REST_END",
-                endTime,
-                duration,
-            });
-        } catch (err) {
-            console.warn("SW 予約失敗:", err);
-        }
+            reg.active?.postMessage({ type: "SCHEDULE_REST_END", endTime, duration });
+        } catch (err) { console.warn("SW 予約失敗:", err); }
     }
-
     startTicking();
 }
 
@@ -314,15 +267,12 @@ function startTicking() {
     updateTimer();
 }
 
-/* =========================================================
-   休憩完了
-   ========================================================= */
+/* ---------- 休憩完了 ---------- */
 function finishRest() {
     if (tickId) { clearInterval(tickId); tickId = null; }
     endTime = null;
     pausedTimeLeft = null;
     localStorage.removeItem("restEndTime");
-
     releaseWakeLock();
     stopWakeLockWatchdog();
 
@@ -331,9 +281,7 @@ function finishRest() {
 
     title.textContent = "休憩おつかれさま";
     title.classList.add("fade-in");
-    message.innerHTML =
-        "自分のための時間を過ごしました。<br>" +
-        "また自分のペースで過ごしましょう。";
+    message.innerHTML = "自分のための時間を過ごしました。<br>また自分のペースで過ごしましょう。";
     message.classList.add("fade-in");
 
     const usedDuration = parseInt(localStorage.getItem("restDurationUsed") || "300", 10);
@@ -344,44 +292,28 @@ function finishRest() {
     stopButton.hidden = true;
     continueButton.style.display = "block";
 
-    sendNotification(
-        "休憩おつかれさま 🌿",
-        `${Math.round(usedDuration / 60)}分の休憩が終わりました。`
-    );
-
+    sendNotification("休憩おつかれさま 🌿", `${Math.round(usedDuration / 60)}分の休憩が終わりました。`);
     playSelectedAlarm();
-
-    if (navigator.vibrate && vibrateEnabled?.checked) {
-        navigator.vibrate([200, 100, 200]);
-    }
+    if (navigator.vibrate && vibrateEnabled?.checked) navigator.vibrate([200, 100, 200]);
 }
 
-/* =========================================================
-   休憩をストップ（続きから再開可能）
-   ========================================================= */
+/* ---------- ストップ ---------- */
 function stopRest() {
     if (tickId === null) return;
-
     const remaining = Math.max(0, Math.round((endTime - Date.now()) / 1000));
     pausedTimeLeft = remaining;
-
     clearInterval(tickId);
     tickId = null;
     endTime = null;
     localStorage.removeItem("restEndTime");
-
     releaseWakeLock();
     stopWakeLockWatchdog();
-
     document.querySelector(".timer-wrap").classList.remove("pulse");
 
     title.textContent = "休憩を一時停止しました";
     title.classList.add("fade-in");
-    message.innerHTML =
-        `残り <strong>${Math.floor(remaining / 60)}分${remaining % 60}秒</strong> です。<br>` +
-        "「続きから再開」で再開できます。";
+    message.innerHTML = `残り <strong>${Math.floor(remaining / 60)}分${remaining % 60}秒</strong> です。<br>「続きから再開」で再開できます。`;
     message.classList.add("fade-in");
-
     status.textContent = "おつかれさまでした 🌿";
     restButton.hidden = true;
     resetButton.hidden = false;
@@ -389,7 +321,6 @@ function stopRest() {
     continueButton.style.display = "block";
 }
 
-/* ---------- ボタンイベント ---------- */
 restButton?.addEventListener("click", () => startRest(false));
 stopButton?.addEventListener("click", stopRest);
 resetButton?.addEventListener("click", () => {
@@ -399,13 +330,10 @@ resetButton?.addEventListener("click", () => {
     stopButton.hidden = true;
     startRest(true);
 });
-
 continueButton?.addEventListener("click", () => {
     title.textContent = "わかりました";
     title.classList.add("fade-in");
-    message.innerHTML =
-        "スマホを使うことが悪いわけではありません。<br>" +
-        "また休みたくなったときに、ここへ戻ってきてください。";
+    message.innerHTML = "スマホを使うことが悪いわけではありません。<br>また休みたくなったときに、ここへ戻ってきてください。";
     message.classList.add("fade-in");
     status.textContent = "自分のペースでどうぞ。";
     restButton.style.display = "none";
@@ -418,15 +346,12 @@ continueButton?.addEventListener("click", () => {
     scheduleButton.style.display = "none";
 });
 
-/* =========================================================
-   復帰チェック
-   ========================================================= */
+/* ---------- 復帰チェック ---------- */
 function checkRestOnReturn() {
     const saved = localStorage.getItem("restEndTime");
     if (!saved) return;
     const savedEnd = parseInt(saved, 10);
     const now = Date.now();
-
     if (now >= savedEnd) {
         endTime = savedEnd;
         notifyEnabled = localStorage.getItem("notifyEnabled") === "1";
@@ -442,9 +367,7 @@ function checkRestOnReturn() {
     }
 }
 
-/* =========================================================
-   通知時刻リスト
-   ========================================================= */
+/* ---------- 通知時刻リスト ---------- */
 function renderTimesList(times) {
     timesList.innerHTML = "";
     if (!times.length) {
@@ -458,12 +381,10 @@ function renderTimesList(times) {
     times.forEach((t) => {
         const row = document.createElement("div");
         row.className = "time-row";
-
         const input = document.createElement("input");
         input.type = "time";
         input.value = t;
         input.addEventListener("change", updateScheduleInfo);
-
         const remove = document.createElement("button");
         remove.className = "remove-btn";
         remove.type = "button";
@@ -474,26 +395,22 @@ function renderTimesList(times) {
             if (!timesList.querySelector(".time-row")) renderTimesList([]);
             updateScheduleInfo();
         });
-
         row.appendChild(input);
         row.appendChild(remove);
         timesList.appendChild(row);
     });
 }
-
 function getCurrentTimes() {
     return Array.from(timesList.querySelectorAll('input[type="time"]'))
         .map((i) => i.value)
         .filter(Boolean);
 }
-
 addTimeBtn?.addEventListener("click", () => {
     const existing = getCurrentTimes();
     const all = [...existing, "12:00"];
     renderTimesList(all);
     updateScheduleInfo();
 });
-
 quickBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
         const preset = btn.dataset.preset;
@@ -511,9 +428,7 @@ quickBtns.forEach((btn) => {
     });
 });
 
-/* =========================================================
-   通知スケジュール
-   ========================================================= */
+/* ---------- 通知スケジュール ---------- */
 function loadScheduleSettings() {
     const saved = JSON.parse(localStorage.getItem("scheduleSettings") || "{}");
     const times = saved.times || ["10:00", "14:00", "18:00"];
@@ -521,7 +436,6 @@ function loadScheduleSettings() {
     scheduleEnabled.checked = !!saved.enabled;
     updateScheduleInfo();
 }
-
 function saveScheduleSettings() {
     const times = getCurrentTimes();
     const settings = { times, enabled: scheduleEnabled.checked };
@@ -531,93 +445,66 @@ function saveScheduleSettings() {
     updateScheduleInfo();
     return settings;
 }
-
 function updateScheduleInfo() {
     const times = getCurrentTimes();
-    if (!scheduleEnabled.checked) {
-        scheduleInfo.textContent = "現在オフです。";
-        return;
-    }
-    if (!times.length) {
-        scheduleInfo.textContent = "時刻が未設定です。";
-        return;
-    }
+    if (!scheduleEnabled.checked) { scheduleInfo.textContent = "現在オフです。"; return; }
+    if (!times.length) { scheduleInfo.textContent = "時刻が未設定です。"; return; }
     scheduleInfo.textContent = `1日 ${times.length} 回、指定時刻に通知します。`;
 }
-
 scheduleButton?.addEventListener("click", () => {
     loadScheduleSettings();
     scheduleModal.hidden = false;
 });
-
 scheduleSave?.addEventListener("click", () => {
     saveScheduleSettings();
     scheduleModal.hidden = true;
     status.textContent = "スケジュールを保存しました。";
 });
-
 scheduleEnabled?.addEventListener("change", updateScheduleInfo);
 
 function checkScheduledReminders() {
     const settings = JSON.parse(localStorage.getItem("scheduleSettings") || "{}");
     if (!settings.enabled || !settings.times?.length) return;
-
     const now = new Date();
     const nowMin = now.getHours() * 60 + now.getMinutes();
     const todayKey = now.toDateString();
     const firedKey = "firedTimes_" + todayKey;
     const fired = JSON.parse(localStorage.getItem(firedKey) || "[]");
-
     for (const t of settings.times) {
         if (fired.includes(t)) continue;
         const [h, m] = t.split(":").map(Number);
         const targetMin = h * 60 + m;
-
         if (nowMin >= targetMin && nowMin - targetMin <= 5) {
-            sendNotification(
-                "ひとやすみ",
-                `そろそろ ${t} です。少し休みませんか？ 🌿`,
-                { tag: "reminder-" + t }
-            );
+            sendNotification("ひとやすみ", `そろそろ ${t} です。少し休みませんか？ 🌿`, { tag: "reminder-" + t });
             fired.push(t);
             localStorage.setItem(firedKey, JSON.stringify(fired));
         }
     }
 }
 
-/* =========================================================
-   アラーム音
-   ========================================================= */
+/* ---------- アラーム音 ---------- */
 function getAudioCtx() {
-    if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === "suspended") audioCtx.resume();
     return audioCtx;
 }
-
 function playTone(freq, startTime, duration, volume = 0.3, type = "sine") {
     const ctx = getAudioCtx();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-
     osc.type = type;
     osc.frequency.value = freq;
-
-    const attack  = Math.min(0.15, duration * 0.2);
+    const attack = Math.min(0.15, duration * 0.2);
     const release = duration * 0.6;
-
     gain.gain.setValueAtTime(0, startTime);
     gain.gain.linearRampToValueAtTime(volume * alarmVolumeValue, startTime + attack);
     gain.gain.setValueAtTime(volume * alarmVolumeValue, startTime + duration - release);
     gain.gain.linearRampToValueAtTime(0.0001, startTime + duration);
-
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start(startTime);
     osc.stop(startTime + duration);
 }
-
 function playGentleChime() {
     const ctx = getAudioCtx();
     const now = ctx.currentTime + 0.1;
@@ -625,7 +512,6 @@ function playGentleChime() {
     chord.forEach((f, i) => playTone(f, now + i * 0.08, 1.6, 0.22));
     chord.forEach((f, i) => playTone(f, now + 0.9 + i * 0.08, 1.8, 0.18));
 }
-
 function playBell() {
     const ctx = getAudioCtx();
     const now = ctx.currentTime + 0.1;
@@ -633,7 +519,6 @@ function playBell() {
     playTone(1320, now + 0.02, 2.0, 0.12, "sine");
     playTone(1760, now + 0.05, 1.5, 0.06, "sine");
 }
-
 function playBirds() {
     const ctx = getAudioCtx();
     const now = ctx.currentTime + 0.1;
@@ -643,7 +528,6 @@ function playBirds() {
     playTone(1760, now + 0.65, 0.12, 0.15);
     playTone(2093, now + 0.85, 0.25, 0.18);
 }
-
 function playWood() {
     const ctx = getAudioCtx();
     const now = ctx.currentTime + 0.1;
@@ -663,7 +547,6 @@ function playWood() {
     woodTone(659.25, now);
     woodTone(523.25, now + 0.35);
 }
-
 const ALARMS = {
     gentle: { name: "やさしいチャイム", desc: "ドミソの柔らかい和音が2回", play: playGentleChime },
     bell:   { name: "鈴の音",          desc: "りん、と1回静かに",       play: playBell },
@@ -671,7 +554,6 @@ const ALARMS = {
     wood:   { name: "木琴の音",        desc: "ポロン、ポロンと2音",     play: playWood },
     none:   { name: "鳴らさない",      desc: "通知だけ（音は無し）",     play: () => {} },
 };
-
 function playSelectedAlarm() {
     if (!alarmEnabled) return;
     const alarm = ALARMS[selectedAlarm];
@@ -679,23 +561,18 @@ function playSelectedAlarm() {
     try { alarm.play(); } catch (err) { console.warn(err); }
 }
 
-/* =========================================================
-   アラーム設定
-   ========================================================= */
+/* ---------- アラーム設定 ---------- */
 function renderAlarmList() {
     alarmList.innerHTML = "";
     Object.entries(ALARMS).forEach(([key, alarm]) => {
         const item = document.createElement("div");
         item.className = "alarm-item" + (key === selectedAlarm ? " active" : "");
         item.dataset.key = key;
-
         const radio = document.createElement("span");
         radio.className = "alarm-item-radio";
-
         const label = document.createElement("div");
         label.className = "alarm-item-label";
         label.innerHTML = `<div>${alarm.name}</div><div class="alarm-item-desc">${alarm.desc}</div>`;
-
         const play = document.createElement("button");
         play.className = "alarm-item-play";
         play.type = "button";
@@ -706,38 +583,25 @@ function renderAlarmList() {
             if (key === "none") return;
             try { alarm.play(); } catch (err) { console.warn(err); }
         });
-
         item.appendChild(radio);
         item.appendChild(label);
         item.appendChild(play);
-
-        item.addEventListener("click", () => {
-            selectedAlarm = key;
-            renderAlarmList();
-        });
-
+        item.addEventListener("click", () => { selectedAlarm = key; renderAlarmList(); });
         alarmList.appendChild(item);
     });
 }
-
 function loadAlarmSettings() {
     const saved = JSON.parse(localStorage.getItem("alarmSettings") || "{}");
     selectedAlarm = saved.alarm || "wood";
     alarmVolumeValue = saved.volume ?? 0.6;
     vibrateEnabled.checked = saved.vibrate !== false;
     alarmEnabled = !!saved.enabled;
-
     alarmVolume.value = Math.round(alarmVolumeValue * 100);
     volumeValue.textContent = alarmVolume.value;
-
     alarmToggle.setAttribute("aria-pressed", String(alarmEnabled));
-    alarmToggle.textContent = alarmEnabled
-        ? "🔔 アラームオン"
-        : "🔕 アラームをオンにする";
-
+    alarmToggle.textContent = alarmEnabled ? "🔔 アラームオン" : "🔕 アラームをオンにする";
     renderAlarmList();
 }
-
 function saveAlarmSettings() {
     const settings = {
         alarm: selectedAlarm,
@@ -747,39 +611,28 @@ function saveAlarmSettings() {
     };
     localStorage.setItem("alarmSettings", JSON.stringify(settings));
 }
-
 alarmSettingsBtn?.addEventListener("click", () => {
     loadAlarmSettings();
     alarmModal.hidden = false;
 });
-
 alarmVolume?.addEventListener("input", () => {
     alarmVolumeValue = parseInt(alarmVolume.value, 10) / 100;
     volumeValue.textContent = alarmVolume.value;
 });
-
 alarmTestBtn?.addEventListener("click", () => {
-    if (selectedAlarm === "none") {
-        status.textContent = "「鳴らさない」が選択されています。";
-        return;
-    }
+    if (selectedAlarm === "none") { status.textContent = "「鳴らさない」が選択されています。"; return; }
     try { ALARMS[selectedAlarm].play(); } catch (err) { console.warn(err); }
 });
-
 alarmSaveBtn?.addEventListener("click", () => {
     saveAlarmSettings();
     alarmModal.hidden = true;
     status.textContent = "アラーム設定を保存しました。";
 });
-
 alarmToggle?.addEventListener("click", () => {
     alarmEnabled = !alarmEnabled;
     alarmToggle.setAttribute("aria-pressed", String(alarmEnabled));
-    alarmToggle.textContent = alarmEnabled
-        ? "🔔 アラームオン"
-        : "🔕 アラームをオンにする";
+    alarmToggle.textContent = alarmEnabled ? "🔔 アラームオン" : "🔕 アラームをオンにする";
     saveAlarmSettings();
-
     if (alarmEnabled) {
         try {
             const ctx = getAudioCtx();
@@ -789,41 +642,32 @@ alarmToggle?.addEventListener("click", () => {
             osc.connect(g).connect(ctx.destination);
             osc.start();
             osc.stop(ctx.currentTime + 0.01);
-        } catch (err) {
-            console.warn("Audio unlock failed:", err);
-        }
+        } catch (err) { console.warn("Audio unlock failed:", err); }
     }
 });
 
-/* =========================================================
-   iPhone 用：ホーム画面追加案内
-   ========================================================= */
+/* ---------- iPhone 用ホーム画面追加案内 ---------- */
 function shouldShowIosHint() {
     if (!isiOS()) return false;
     if (isInStandaloneMode()) return false;
     if (localStorage.getItem("iosHintDismissed") === "1") return false;
     return true;
 }
-
 if (shouldShowIosHint() && iosHint) {
     setTimeout(() => { iosHint.hidden = false; }, 3000);
 }
-
 iosClose?.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (iosHint) iosHint.hidden = true;
     localStorage.setItem("iosHintDismissed", "1");
 });
-
 window.addEventListener("appinstalled", () => {
     if (iosHint) iosHint.hidden = true;
     localStorage.setItem("iosHintDismissed", "1");
 });
 
-/* =========================================================
-   復帰トリガー
-   ========================================================= */
+/* ---------- 復帰トリガー ---------- */
 document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
         checkRestOnReturn();
@@ -837,9 +681,7 @@ window.addEventListener("focus", () => {
     if (tickId !== null) requestWakeLock();
 });
 
-/* =========================================================
-   初期化
-   ========================================================= */
+/* ---------- 初期化 ---------- */
 function restoreSettings() {
     const savedDur = parseInt(localStorage.getItem("restDuration") || "0", 10);
     if (savedDur >= 60) {
@@ -859,7 +701,6 @@ function restoreSettings() {
         notifyToggle.textContent = "🔔 通知オン";
     }
 }
-
 restoreSettings();
 loadAlarmSettings();
 updateTimer();
@@ -870,9 +711,7 @@ setInterval(checkScheduledReminders, 60 * 1000);
 
 if ("serviceWorker" in navigator && location.protocol !== "file:") {
     navigator.serviceWorker.addEventListener("message", (e) => {
-        if (e.data?.type === "REST_END") {
-            checkRestOnReturn();
-        }
+        if (e.data?.type === "REST_END") checkRestOnReturn();
     });
 }
 

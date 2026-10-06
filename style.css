@@ -1,7 +1,3 @@
-/* =========================================================
-   ひとやすみ - スタイリッシュ版スタイル
-   ========================================================= */
-
 * { box-sizing: border-box; }
 
 :root {
@@ -14,11 +10,9 @@
     --muted: #8a9490;
     --accent: #7fb77e;
     --accent-dark: #5c9c68;
-    --accent-light: #a8d5a9;
     --primary: #2f3a30;
     --primary-text: #ffffff;
     --danger: #c96666;
-    --shadow-sm: 0 2px 8px rgba(60, 90, 70, 0.06);
     --shadow-md: 0 8px 30px rgba(60, 90, 70, 0.08);
     --shadow-lg: 0 20px 60px rgba(60, 90, 70, 0.12);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -36,21 +30,15 @@
         --muted: #7a8480;
         --accent: #8ecb8f;
         --accent-dark: #6ba06f;
-        --accent-light: #b8e0b9;
         --primary: #8ecb8f;
         --primary-text: #14181a;
         --danger: #d68585;
-        --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
         --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.4);
         --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.5);
     }
 }
 
-html {
-    -webkit-text-size-adjust: 100%;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-}
+html { -webkit-text-size-adjust: 100%; -webkit-font-smoothing: antialiased; }
 
 body {
     margin: 0;
@@ -67,9 +55,6 @@ body {
     line-height: 1.6;
 }
 
-/* =========================================================
-   レイアウト
-   ========================================================= */
 .container {
     width: min(90%, 560px);
     margin: 0 auto;
@@ -84,7 +69,6 @@ body {
     letter-spacing: 0.15em;
     text-transform: uppercase;
     margin: 0 0 8px;
-    opacity: 0.8;
 }
 
 h1 {
@@ -107,9 +91,6 @@ h1 {
     padding: 0 8px;
 }
 
-/* =========================================================
-   メインカード（ガラス風）
-   ========================================================= */
 .rest-card {
     margin-top: 40px;
     padding: 44px 28px 36px;
@@ -119,12 +100,8 @@ h1 {
     border: 1px solid var(--card-border);
     border-radius: 32px;
     box-shadow: var(--shadow-md);
-    transition: box-shadow 0.3s ease;
 }
 
-/* =========================================================
-   タイマー（円形プログレス）
-   ========================================================= */
 .timer-wrap {
     position: relative;
     width: 240px;
@@ -155,7 +132,7 @@ h1 {
     stroke: url(#progressGradient);
     stroke-width: 10;
     stroke-linecap: round;
-    stroke-dasharray: 678.58;   /* 2π × 108 */
+    stroke-dasharray: 678.58;
     stroke-dashoffset: 0;
     transition: stroke-dashoffset 1s linear;
 }
@@ -176,12 +153,8 @@ h1 {
     min-height: 1.5em;
     font-size: 14px;
     font-weight: 500;
-    letter-spacing: 0.02em;
 }
 
-/* =========================================================
-   ボタン（共通）
-   ========================================================= */
 button {
     width: 100%;
     padding: 16px 20px;
@@ -191,35 +164,17 @@ button {
     font-size: 15.5px;
     font-weight: 600;
     font-family: inherit;
-    letter-spacing: 0.02em;
     cursor: pointer;
-    transition: transform 0.15s ease, box-shadow 0.2s ease,
-                opacity 0.2s ease, background 0.2s ease;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
-    position: relative;
-    overflow: hidden;
 }
 
-button:hover:not(:disabled) {
-    transform: translateY(-2px);
-}
+button:hover:not(:disabled) { transform: translateY(-2px); }
+button:active:not(:disabled) { transform: translateY(0) scale(0.98); }
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 
-button:active:not(:disabled) {
-    transform: translateY(0) scale(0.98);
-}
-
-button:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-}
-
-button:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 3px;
-}
-
-/* ---------- メインボタン（グラデーション） ---------- */
 .primary {
     background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
     color: #ffffff;
@@ -230,7 +185,6 @@ button:focus-visible {
     box-shadow: 0 10px 28px rgba(127, 183, 126, 0.45);
 }
 
-/* ---------- セカンダリ（ゴースト） ---------- */
 .secondary {
     background: transparent;
     color: var(--text-sub);
@@ -242,7 +196,6 @@ button:focus-visible {
     border-color: rgba(127, 183, 126, 0.5);
 }
 
-/* ---------- ストップボタン（警告色） ---------- */
 #stopButton {
     color: var(--danger);
     border: 1.5px solid rgba(201, 102, 102, 0.3);
@@ -255,7 +208,6 @@ button:focus-visible {
     border-color: rgba(201, 102, 102, 0.5);
 }
 
-/* ---------- ゴースト（設定系） ---------- */
 .ghost {
     background: transparent;
     color: var(--text-sub);
@@ -275,9 +227,6 @@ button:focus-visible {
     background: rgba(127, 183, 126, 0.1);
 }
 
-/* =========================================================
-   休憩時間ピッカー
-   ========================================================= */
 .duration-picker {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -293,13 +242,11 @@ button:focus-visible {
     color: var(--text-sub);
     border: 1.5px solid rgba(127, 183, 126, 0.2);
     border-radius: 14px;
-    transition: all 0.2s ease;
 }
 
 .duration-btn:hover:not(:disabled) {
     border-color: rgba(127, 183, 126, 0.5);
     color: var(--accent-dark);
-    transform: translateY(-1px);
 }
 
 .duration-btn.active {
@@ -313,9 +260,6 @@ button:focus-visible {
     .duration-picker { grid-template-columns: repeat(3, 1fr); }
 }
 
-/* =========================================================
-   カスタム時間入力
-   ========================================================= */
 .custom-duration {
     display: flex;
     align-items: center;
@@ -337,13 +281,10 @@ button:focus-visible {
     font-size: 15px;
     font-weight: 600;
     text-align: center;
-    transition: all 0.2s;
 }
 
 @media (prefers-color-scheme: dark) {
-    .custom-duration input[type="number"] {
-        background: rgba(0, 0, 0, 0.2);
-    }
+    .custom-duration input[type="number"] { background: rgba(0, 0, 0, 0.2); }
 }
 
 .custom-duration input[type="number"]:focus {
@@ -363,13 +304,6 @@ button:focus-visible {
     box-shadow: 0 4px 12px rgba(127, 183, 126, 0.3);
 }
 
-.mini-btn:hover:not(:disabled) {
-    box-shadow: 0 6px 16px rgba(127, 183, 126, 0.4);
-}
-
-/* =========================================================
-   モーダル
-   ========================================================= */
 .modal {
     position: fixed;
     inset: 0;
@@ -381,12 +315,6 @@ button:focus-visible {
     justify-content: center;
     z-index: 200;
     padding: 20px;
-    animation: modalFade 0.25s ease-out;
-}
-
-@keyframes modalFade {
-    from { opacity: 0; }
-    to { opacity: 1; }
 }
 
 .modal[hidden] { display: none; }
@@ -404,12 +332,6 @@ button:focus-visible {
     padding: 32px 26px 26px;
     box-shadow: var(--shadow-lg);
     text-align: left;
-    animation: modalSlideUp 0.35s cubic-bezier(0.34, 1.3, 0.64, 1);
-}
-
-@keyframes modalSlideUp {
-    from { opacity: 0; transform: translateY(24px) scale(0.96); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .modal-title {
@@ -418,7 +340,6 @@ button:focus-visible {
     font-size: 21px;
     font-weight: 700;
     text-align: center;
-    letter-spacing: -0.01em;
 }
 
 .modal-desc {
@@ -461,9 +382,6 @@ button:focus-visible {
     transform: scale(1.05);
 }
 
-/* =========================================================
-   フィールド
-   ========================================================= */
 .field {
     display: flex;
     justify-content: space-between;
@@ -484,14 +402,11 @@ button:focus-visible {
     font-size: 14.5px;
     font-weight: 600;
     min-width: 130px;
-    transition: all 0.2s;
 }
 
 @media (prefers-color-scheme: dark) {
     .field input[type="time"],
-    .field select {
-        background: rgba(0, 0, 0, 0.25);
-    }
+    .field select { background: rgba(0, 0, 0, 0.25); }
 }
 
 .field input[type="range"] {
@@ -507,9 +422,6 @@ button:focus-visible {
     font-weight: 500;
 }
 
-/* =========================================================
-   トグルスイッチ
-   ========================================================= */
 .toggle-row {
     display: flex;
     justify-content: space-between;
@@ -554,13 +466,17 @@ button:focus-visible {
     background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
 }
 
-.switch input:checked + .slider::before {
-    transform: translateX(22px);
+.switch input:checked + .slider::before { transform: translateX(22px); }
+
+.schedule-info {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    margin: 8px 0 20px;
+    min-height: 1.5em;
+    line-height: 1.6;
 }
 
-/* =========================================================
-   通知時刻リスト
-   ========================================================= */
 .times-list-header {
     display: flex;
     justify-content: space-between;
@@ -587,11 +503,6 @@ button:focus-visible {
     border: 1px solid rgba(127, 183, 126, 0.12);
     border-radius: 14px;
     padding: 10px 14px;
-    transition: all 0.2s;
-}
-
-.time-row:hover {
-    background: rgba(127, 183, 126, 0.1);
 }
 
 .time-row input[type="time"] {
@@ -618,11 +529,6 @@ button:focus-visible {
     line-height: 1;
     border-radius: 50%;
     flex-shrink: 0;
-    transition: all 0.2s;
-}
-
-.time-row .remove-btn:hover {
-    background: rgba(201, 102, 102, 0.12);
 }
 
 .times-list .empty {
@@ -634,9 +540,6 @@ button:focus-visible {
     opacity: 0.7;
 }
 
-/* =========================================================
-   クイック追加
-   ========================================================= */
 .quick-add {
     margin: 20px 0;
     padding-top: 20px;
@@ -668,19 +571,14 @@ button:focus-visible {
     font-size: 13px;
     font-weight: 600;
     border-radius: 12px;
-    transition: all 0.2s;
 }
 
 .quick-btn:hover {
     border-color: var(--accent);
     color: var(--accent-dark);
     background: rgba(127, 183, 126, 0.06);
-    transform: translateY(-1px);
 }
 
-/* =========================================================
-   アラームリスト
-   ========================================================= */
 .alarm-list {
     display: flex;
     flex-direction: column;
@@ -701,11 +599,6 @@ button:focus-visible {
     font-size: 14px;
 }
 
-.alarm-item:hover {
-    background: rgba(127, 183, 126, 0.08);
-    transform: translateY(-1px);
-}
-
 .alarm-item.active {
     border-color: var(--accent);
     background: rgba(127, 183, 126, 0.12);
@@ -719,12 +612,9 @@ button:focus-visible {
     border: 2px solid var(--muted);
     flex-shrink: 0;
     position: relative;
-    transition: all 0.2s;
 }
 
-.alarm-item.active .alarm-item-radio {
-    border-color: var(--accent);
-}
+.alarm-item.active .alarm-item-radio { border-color: var(--accent); }
 
 .alarm-item.active .alarm-item-radio::after {
     content: "";
@@ -757,17 +647,8 @@ button:focus-visible {
     border-radius: 50%;
     font-size: 14px;
     flex-shrink: 0;
-    transition: all 0.2s;
 }
 
-.alarm-item-play:hover {
-    background: rgba(127, 183, 126, 0.2);
-    transform: scale(1.08);
-}
-
-/* =========================================================
-   iPhone 用：ホーム画面追加バナー
-   ========================================================= */
 .ios-hint {
     position: fixed;
     left: 50%;
@@ -814,9 +695,7 @@ button:focus-visible {
     color: var(--muted);
 }
 
-.ios-hint-note strong {
-    color: var(--accent-dark);
-}
+.ios-hint-note strong { color: var(--accent-dark); }
 
 .ios-icon {
     display: inline-block;
@@ -846,37 +725,24 @@ button:focus-visible {
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background 0.2s;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
 
-.ios-close:hover {
-    background: rgba(127, 183, 126, 0.1);
-}
-
-/* =========================================================
-   アニメーション
-   ========================================================= */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 
-.fade-in {
-    animation: fadeIn 0.5s cubic-bezier(0.34, 1.3, 0.64, 1);
-}
+.fade-in { animation: fadeIn 0.5s cubic-bezier(0.34, 1.3, 0.64, 1); }
 
 @keyframes pulse {
     0%, 100% { transform: scale(1); }
     50%      { transform: scale(1.02); }
 }
 
-.pulse {
-    animation: pulse 2.4s ease-in-out infinite;
-}
+.pulse { animation: pulse 2.4s ease-in-out infinite; }
 
-/* ページ読み込み時のふわっと出現 */
 @keyframes pageEnter {
     from { opacity: 0; transform: translateY(16px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -893,24 +759,3 @@ button:focus-visible {
 .container > h1         { animation-delay: 0.1s; }
 .container > .message   { animation-delay: 0.15s; }
 .container > .rest-card { animation-delay: 0.2s; }
-
-/* =========================================================
-   スクロールバー（PC）
-   ========================================================= */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-    background: rgba(127, 183, 126, 0.3);
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: rgba(127, 183, 126, 0.5);
-}
