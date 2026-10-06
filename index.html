@@ -46,34 +46,42 @@
 
             <!-- タイマー -->
             <div class="timer-wrap" id="timerWrap">
-                <svg class="progress-ring" width="260" height="260" viewBox="0 0 260 260" aria-hidden="true">
-                    <defs>
-                        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#7ddc9a" />
-                            <stop offset="50%" stop-color="#4ade80" />
-                            <stop offset="100%" stop-color="#22d3ee" />
-                        </linearGradient>
-                    </defs>
-                    <circle class="progress-ring__bg" cx="130" cy="130" r="118" />
-                    <circle id="progressCircle" class="progress-ring__fg" cx="130" cy="130" r="118" />
-                </svg>
+    <svg class="progress-ring" width="280" height="280" viewBox="0 0 280 280" aria-hidden="true">
+        <defs>
+            <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#7ddc9a" />
+                <stop offset="50%" stop-color="#4ade80" />
+                <stop offset="100%" stop-color="#22d3ee" />
+            </linearGradient>
+            <radialGradient id="breathGlow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="rgba(74, 222, 128, 0.5)" />
+                <stop offset="70%" stop-color="rgba(74, 222, 128, 0.05)" />
+                <stop offset="100%" stop-color="rgba(74, 222, 128, 0)" />
+            </radialGradient>
+        </defs>
+        <circle class="progress-ring__bg" cx="140" cy="140" r="128" />
+        <circle id="progressCircle" class="progress-ring__fg" cx="140" cy="140" r="128" />
+    </svg>
 
-                <!-- 呼吸ガイド円 -->
-                <div id="breathCircle" class="breath-circle" hidden></div>
-                <div id="breathCountdown" class="breath-countdown" hidden></div>
+    <!-- 呼吸ガイド: 波紋レイヤー -->
+    <div class="breath-ripple-layer">
+        <div class="ripple ripple-1" id="ripple1"></div>
+        <div class="ripple ripple-2" id="ripple2"></div>
+        <div class="ripple ripple-3" id="ripple3"></div>
+    </div>
 
-                <div id="timer" class="timer" role="timer" aria-live="polite">05:00</div>
-            </div>
+    <!-- 呼吸ガイド: メイン円 -->
+    <div id="breathCircle" class="breath-circle" hidden></div>
 
-            <!-- 呼吸ガイド情報 -->
-            <div id="breathPanel" class="breath-panel" hidden>
-                <div class="breath-phase-row">
-                    <span class="breath-phase-dot" id="phaseDot"></span>
-                    <span class="breath-phase-label" id="breathPhase">吸う</span>
-                </div>
-                <p class="breath-instruction" id="breathInstruction">鼻からゆっくり吸って…</p>
-                <p class="breath-counter" id="breathCounter">1回目</p>
-            </div>
+    <!-- 呼吸ガイド: パーティクル -->
+    <div class="breath-particles" id="breathParticles"></div>
+
+    <!-- カウントダウン -->
+    <div id="breathCountdown" class="breath-countdown" hidden></div>
+
+    <!-- タイマー -->
+    <div id="timer" class="timer" role="timer" aria-live="polite">05:00</div>
+        </div>
 
             <!-- 環境音の選択 -->
             <div class="sound-picker" id="soundPicker" role="group" aria-label="環境音">

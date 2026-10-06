@@ -1,7 +1,7 @@
 {
   "name": "ひとやすみ",
   "short_name": "ひとやすみ",
-  "description": "5分間の休憩を優しく促す、やさしい休憩アプリ",
+  "description": "雨音と呼吸ガイドで、心を整える休憩アプリ",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
