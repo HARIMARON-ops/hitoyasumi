@@ -1,82 +1,197 @@
-<div class="rest-card">
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="雨音と呼吸ガイドで、心を整える休憩アプリ">
 
-    <!-- タイマー -->
-    <div class="timer-wrap" id="timerWrap">
-        <svg class="progress-ring" width="260" height="260" viewBox="0 0 260 260" aria-hidden="true">
-            <defs>
-                <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#7ddc9a" />
-                    <stop offset="50%" stop-color="#4ade80" />
-                    <stop offset="100%" stop-color="#22d3ee" />
-                </linearGradient>
-            </defs>
-            <circle class="progress-ring__bg" cx="130" cy="130" r="118" />
-            <circle id="progressCircle" class="progress-ring__fg" cx="130" cy="130" r="118" />
-        </svg>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ひとやすみ">
 
-        <!-- 呼吸ガイド円（タイマー内側） -->
-        <div id="breathCircle" class="breath-circle" hidden></div>
-        <div id="breathCountdown" class="breath-countdown" hidden></div>
+    <meta property="og:title" content="ひとやすみ 🌧">
+    <meta property="og:description" content="雨音と呼吸ガイドで、心を整える休憩アプリ">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://harimaron-ops.github.io/hitoyasumi/">
+    <meta property="og:image" content="https://harimaron-ops.github.io/hitoyasumi/icons/icon-512.png">
+    <meta property="og:site_name" content="ひとやすみ">
 
-        <div id="timer" class="timer" role="timer" aria-live="polite">05:00</div>
-    </div>
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="ひとやすみ 🌧">
+    <meta name="twitter:description" content="雨音と呼吸ガイドで、心を整える休憩アプリ">
+    <meta name="twitter:image" content="https://harimaron-ops.github.io/hitoyasumi/icons/icon-512.png">
 
-    <!-- 呼吸ガイド -->
-    <div id="breathPanel" class="breath-panel" hidden>
-        <div class="breath-phase-row">
-            <span class="breath-phase-dot" id="phaseDot"></span>
-            <span class="breath-phase-label" id="breathPhase">吸う</span>
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+    <title>ひとやすみ</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+
+<body>
+    <main class="container">
+
+        <p class="greeting" id="greeting">今日もおつかれさま</p>
+        <h1 id="title">少し、休みませんか？</h1>
+        <p id="message" class="message">
+            呼吸を整えて、心を静める時間。<br>
+            あなたのためのひとやすみを。
+        </p>
+
+        <div class="rest-card">
+
+            <!-- タイマー -->
+            <div class="timer-wrap" id="timerWrap">
+                <svg class="progress-ring" width="260" height="260" viewBox="0 0 260 260" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#7ddc9a" />
+                            <stop offset="50%" stop-color="#4ade80" />
+                            <stop offset="100%" stop-color="#22d3ee" />
+                        </linearGradient>
+                    </defs>
+                    <circle class="progress-ring__bg" cx="130" cy="130" r="118" />
+                    <circle id="progressCircle" class="progress-ring__fg" cx="130" cy="130" r="118" />
+                </svg>
+
+                <!-- 呼吸ガイド円 -->
+                <div id="breathCircle" class="breath-circle" hidden></div>
+                <div id="breathCountdown" class="breath-countdown" hidden></div>
+
+                <div id="timer" class="timer" role="timer" aria-live="polite">05:00</div>
+            </div>
+
+            <!-- 呼吸ガイド情報 -->
+            <div id="breathPanel" class="breath-panel" hidden>
+                <div class="breath-phase-row">
+                    <span class="breath-phase-dot" id="phaseDot"></span>
+                    <span class="breath-phase-label" id="breathPhase">吸う</span>
+                </div>
+                <p class="breath-instruction" id="breathInstruction">鼻からゆっくり吸って…</p>
+                <p class="breath-counter" id="breathCounter">1回目</p>
+            </div>
+
+            <!-- 環境音の選択 -->
+            <div class="sound-picker" id="soundPicker" role="group" aria-label="環境音">
+                <button class="sound-btn" type="button" data-sound="rain">
+                    <span class="sound-icon">🌧</span>
+                    <span class="sound-name">雨</span>
+                </button>
+                <button class="sound-btn" type="button" data-sound="wave">
+                    <span class="sound-icon">🌊</span>
+                    <span class="sound-name">波</span>
+                </button>
+                <button class="sound-btn" type="button" data-sound="fire">
+                    <span class="sound-icon">🔥</span>
+                    <span class="sound-name">焚き火</span>
+                </button>
+                <button class="sound-btn active" type="button" data-sound="none">
+                    <span class="sound-icon">🔇</span>
+                    <span class="sound-name">なし</span>
+                </button>
+            </div>
+
+            <!-- 休憩時間 -->
+            <div class="duration-picker" role="group" aria-label="休憩時間">
+                <button class="duration-btn" type="button" data-min="1">1分</button>
+                <button class="duration-btn" type="button" data-min="3">3分</button>
+                <button class="duration-btn active" type="button" data-min="5">5分</button>
+                <button class="duration-btn" type="button" data-min="10">10分</button>
+                <button class="duration-btn" type="button" data-min="15">15分</button>
+            </div>
+
+            <div class="custom-duration">
+                <label for="customMinutes">自由設定：</label>
+                <input type="number" id="customMinutes" min="1" max="120" value="5" inputmode="numeric">
+                <span>分</span>
+                <button id="applyCustom" class="mini-btn" type="button">適用</button>
+            </div>
+
+            <p id="status" role="status">5分間、ゆっくり休みましょう。</p>
+
+            <button id="restButton" class="primary" type="button">5分休む</button>
+            <button id="resetButton" class="primary" type="button" hidden>続きから再開</button>
+            <button id="stopButton" class="secondary" type="button" hidden>ストップ</button>
+            <button id="continueButton" class="secondary" type="button">もう少し使う</button>
+
+            <button id="notifyToggle" class="ghost" type="button" aria-pressed="false">
+                🔔 通知を有効にする
+            </button>
+            <button id="scheduleButton" class="ghost" type="button">
+                ⏰ 通知スケジュール設定
+            </button>
         </div>
-        <p class="breath-instruction" id="breathInstruction">鼻からゆっくり吸って…</p>
-        <p class="breath-counter" id="breathCounter">1回目</p>
-    </div>
 
-    <!-- 環境音の選択 -->
-    <div class="sound-picker" id="soundPicker" role="group" aria-label="環境音">
-        <button class="sound-btn" type="button" data-sound="rain">
-            <span class="sound-icon">🌧</span>
-            <span class="sound-name">雨</span>
-        </button>
-        <button class="sound-btn" type="button" data-sound="wave">
-            <span class="sound-icon">🌊</span>
-            <span class="sound-name">波</span>
-        </button>
-        <button class="sound-btn" type="button" data-sound="fire">
-            <span class="sound-icon">🔥</span>
-            <span class="sound-name">焚き火</span>
-        </button>
-        <button class="sound-btn active" type="button" data-sound="none">
-            <span class="sound-icon">🔇</span>
-            <span class="sound-name">なし</span>
-        </button>
-    </div>
+        <!-- 通知スケジュールモーダル -->
+        <div id="scheduleModal" class="modal" hidden>
+            <div class="modal-content">
+                <button class="modal-close" type="button" data-close="scheduleModal" aria-label="閉じる">×</button>
+                <h2 class="modal-title">⏰ 通知スケジュール</h2>
+                <p class="modal-desc">「この時刻に通知してほしい」を個別に追加できます。</p>
 
-    <div class="duration-picker" role="group" aria-label="休憩時間">
-        <button class="duration-btn" type="button" data-min="1">1分</button>
-        <button class="duration-btn" type="button" data-min="3">3分</button>
-        <button class="duration-btn active" type="button" data-min="5">5分</button>
-        <button class="duration-btn" type="button" data-min="10">10分</button>
-        <button class="duration-btn" type="button" data-min="15">15分</button>
-    </div>
+                <div class="times-list-header">
+                    <span>通知する時刻</span>
+                    <button id="addTimeBtn" class="mini-btn" type="button">＋ 追加</button>
+                </div>
+                <div id="timesList" class="times-list"></div>
 
-    <div class="custom-duration">
-        <label for="customMinutes">自由設定：</label>
-        <input type="number" id="customMinutes" min="1" max="120" value="5" inputmode="numeric">
-        <span>分</span>
-        <button id="applyCustom" class="mini-btn" type="button">適用</button>
-    </div>
+                <div class="quick-add">
+                    <p class="quick-add-label">クイック追加</p>
+                    <div class="quick-btns">
+                        <button class="quick-btn" type="button" data-preset="hourly">毎時</button>
+                        <button class="quick-btn" type="button" data-preset="2hours">2時間ごと</button>
+                        <button class="quick-btn" type="button" data-preset="work">仕事の区切り</button>
+                        <button class="quick-btn" type="button" data-preset="clear">クリア</button>
+                    </div>
+                </div>
 
-    <p id="status" role="status">5分間、ゆっくり休みましょう。</p>
+                <div class="toggle-row">
+                    <span>スケジュール通知を有効にする</span>
+                    <label class="switch">
+                        <input type="checkbox" id="scheduleEnabled">
+                        <span class="slider"></span>
+                    </label>
+                </div>
 
-    <button id="restButton" class="primary" type="button">5分休む</button>
-    <button id="resetButton" class="primary" type="button" hidden>続きから再開</button>
-    <button id="stopButton" class="secondary" type="button" hidden>ストップ</button>
-    <button id="continueButton" class="secondary" type="button">もう少し使う</button>
+                <p id="scheduleInfo" class="schedule-info"></p>
 
-    <button id="notifyToggle" class="ghost" type="button" aria-pressed="false">
-        🔔 通知を有効にする
-    </button>
-    <button id="scheduleButton" class="ghost" type="button">
-        ⏰ 通知スケジュール設定
-    </button>
-</div>
+                <button id="scheduleSave" class="primary" type="button">保存する</button>
+            </div>
+        </div>
+
+        <!-- iPhone 用：ホーム画面追加案内 -->
+        <div id="iosHint" class="ios-hint" hidden>
+            <button id="iosClose" class="ios-close" type="button" aria-label="閉じる">×</button>
+            <p class="ios-hint-title">📱 ホーム画面に追加するともっと便利</p>
+            <p class="ios-hint-body">
+                画面下の <span class="ios-icon">⬆︎</span> 共有ボタンをタップ<br>
+                → 「ホーム画面に追加」を選択
+            </p>
+            <p class="ios-hint-note">
+                アプリのように起動でき、<strong>通知も使える</strong>ようになります。
+            </p>
+        </div>
+
+        <!-- 完了時の祝福エフェクト -->
+        <div id="celebration" class="celebration" hidden>
+            <div class="celebration-text">🌿 おつかれさま</div>
+        </div>
+
+    </main>
+
+    <script src="script.js"></script>
+    <script>
+    if ("serviceWorker" in navigator && location.protocol !== "file:") {
+        window.addEventListener("load", () => {
+            navigator.serviceWorker.register("sw.js")
+                .then(reg => console.log("SW registered:", reg.scope))
+                .catch(err => console.error("SW registration failed:", err));
+        });
+    }
+    </script>
+</body>
+</html>
