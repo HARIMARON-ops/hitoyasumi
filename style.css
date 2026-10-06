@@ -1087,3 +1087,185 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .timer {
     font-size: 62px;
 }
+
+/* =========================================================
+   呼吸ガイド強化
+   ========================================================= */
+.breath-circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 130px;
+    height: 130px;
+    margin-top: -65px;
+    margin-left: -65px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(74, 222, 128, 0.18) 0%, rgba(74, 222, 128, 0.02) 70%);
+    border: 2px solid rgba(74, 222, 128, 0.4);
+    pointer-events: none;
+    z-index: 2;
+    transition: transform 4s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.6s ease,
+                background 0.6s ease,
+                opacity 0.3s ease;
+    transform: scale(1);
+    opacity: 0;
+}
+
+.breath-circle.active { opacity: 1; }
+
+/* 吸う（拡大・緑） */
+.breath-circle.inhale {
+    transform: scale(1.7);
+    border-color: rgba(74, 222, 128, 0.8);
+    background: radial-gradient(circle, rgba(74, 222, 128, 0.25) 0%, rgba(74, 222, 128, 0.02) 70%);
+    transition: transform 4s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.6s ease,
+                background 0.6s ease;
+}
+
+/* 止める（そのまま・青） */
+.breath-circle.hold {
+    transform: scale(1.7);
+    border-color: rgba(34, 211, 238, 0.7);
+    background: radial-gradient(circle, rgba(34, 211, 238, 0.2) 0%, rgba(34, 211, 238, 0.02) 70%);
+    transition: border-color 0.6s ease, background 0.6s ease;
+}
+
+/* 吐く（縮小・紫） */
+.breath-circle.exhale {
+    transform: scale(1);
+    border-color: rgba(167, 139, 250, 0.7);
+    background: radial-gradient(circle, rgba(167, 139, 250, 0.2) 0%, rgba(167, 139, 250, 0.02) 70%);
+    transition: transform 8s cubic-bezier(0.4, 0, 0.2, 1),
+                border-color 0.6s ease,
+                background 0.6s ease;
+}
+
+/* 円の中のカウントダウン数字 */
+.breath-countdown {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 32px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    pointer-events: none;
+    z-index: 3;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 20px currentColor;
+    transition: color 0.6s ease;
+    opacity: 0.7;
+}
+
+.breath-countdown[hidden] { display: none; }
+
+.breath-countdown.inhale { color: #4ade80; }
+.breath-countdown.hold   { color: #22d3ee; }
+.breath-countdown.exhale { color: #a78bfa; }
+
+/* 呼吸パネル */
+.breath-panel {
+    margin: -8px 0 20px;
+    text-align: center;
+    animation: fadeIn 0.4s ease-out;
+}
+
+.breath-panel[hidden] { display: none; }
+
+.breath-phase-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.breath-phase-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 12px currentColor;
+    transition: background 0.6s ease, box-shadow 0.6s ease;
+}
+
+.breath-phase-dot.inhale { color: #4ade80; }
+.breath-phase-dot.hold   { color: #22d3ee; }
+.breath-phase-dot.exhale { color: #a78bfa; }
+
+.breath-phase-label {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    color: var(--text-sub);
+    transition: color 0.6s ease;
+}
+
+.breath-phase-label.inhale { color: #4ade80; }
+.breath-phase-label.hold   { color: #22d3ee; }
+.breath-phase-label.exhale { color: #a78bfa; }
+
+.breath-instruction {
+    font-size: 15px;
+    color: var(--text);
+    margin: 0 0 6px;
+    letter-spacing: 0.05em;
+}
+
+.breath-counter {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 0;
+    letter-spacing: 0.1em;
+}
+
+/* =========================================================
+   環境音ピッカー
+   ========================================================= */
+.sound-picker {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 0 0 20px;
+}
+
+.sound-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 4px;
+    margin: 0;
+    background: transparent;
+    color: var(--muted);
+    border: 1.5px solid rgba(74, 222, 128, 0.1);
+    border-radius: 14px;
+    transition: all 0.2s;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.sound-btn:hover:not(:disabled) {
+    border-color: rgba(74, 222, 128, 0.4);
+    color: var(--accent);
+}
+
+.sound-btn.active {
+    background: rgba(74, 222, 128, 0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 16px rgba(74, 222, 128, 0.25);
+}
+
+.sound-icon {
+    font-size: 20px;
+    line-height: 1;
+}
+
+.sound-name {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+}

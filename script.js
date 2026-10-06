@@ -1,5 +1,5 @@
 /* =========================================================
-   ひとやすみ - メインスクリプト (呼吸ガイド + 波の音)
+   ひとやすみ - メインスクリプト (雨音 + 呼吸ガイド強化)
    ========================================================= */
 
 /* ---------- 要素取得 ---------- */
@@ -9,8 +9,13 @@ const title           = document.getElementById("title");
 const message         = document.getElementById("message");
 const progressCircle  = document.getElementById("progressCircle");
 const breathCircle    = document.getElementById("breathCircle");
-const breathText      = document.getElementById("breathText");
-const waveToggle      = document.getElementById("waveToggle");
+const breathCountdown = document.getElementById("breathCountdown");
+const breathPanel     = document.getElementById("breathPanel");
+const breathPhase     = document.getElementById("breathPhase");
+const breathInstruction = document.getElementById("breathInstruction");
+const breathCounter   = document.getElementById("breathCounter");
+const phaseDot        = document.getElementById("phaseDot");
+const soundPicker     = document.getElementById("soundPicker");
 const timerWrap       = document.getElementById("timerWrap");
 const greetingEl      = document.getElementById("greeting");
 const celebration     = document.getElementById("celebration");
@@ -22,6 +27,7 @@ const continueButton  = document.getElementById("continueButton");
 const notifyToggle    = document.getElementById("notifyToggle");
 const scheduleButton  = document.getElementById("scheduleButton");
 const durationButtons = document.querySelectorAll(".duration-btn");
+const soundBtns       = document.querySelectorAll(".sound-btn");
 
 const customMinutes = document.getElementById("customMinutes");
 const applyCustom   = document.getElementById("applyCustom");
@@ -39,6 +45,9 @@ const iosClose = document.getElementById("iosClose");
 
 /* ---------- 定数 ---------- */
 const CIRCUMFERENCE = 2 * Math.PI * 118;
+const BREATH_INHALE  = 4;
+const BREATH_HOLD    = 7;
+const BREATH_EXHALE  = 8;
 
 /* ---------- 状態 ---------- */
 let REST_DURATION    = 5 * 60;
@@ -51,13 +60,14 @@ let pausedTimeLeft   = null;
 
 // 呼吸ガイド
 let breathTimerId    = null;
-let breathPhase      = "inhale";  // inhale / hold / exhale
+let breathCountdownId = null;
+let breathPhaseState = "inhale";
 let breathCycleCount = 0;
 
-// 波の音
+// 環境音
 let audioCtx         = null;
-let waveNodes        = null;
-let wavePlaying      = false;
+let currentSound     = "none";
+let soundNodes       = null;
 
 if (progressCircle) progressCircle.style.strokeDasharray = CIRCUMFERENCE;
 
@@ -72,7 +82,7 @@ function isInStandaloneMode() {
 }
 
 /* =========================================================
-   Screen Wake Lock
+   Wake Lock
    ========================================================= */
 async function requestWakeLock() {
     if (!("wakeLock" in navigator)) return;
@@ -80,13 +90,8 @@ async function requestWakeLock() {
     if (document.visibilityState !== "visible") return;
     try {
         wakeLock = await navigator.wakeLock.request("screen");
-        console.log("[WakeLock] ON");
-        wakeLock.addEventListener("release", () => {
-            wakeLock = null;
-        });
-    } catch (err) {
-        wakeLock = null;
-    }
+        wakeLock.addEventListener("release", () => { wakeLock = null; });
+    } catch (err) { wakeLock = null; }
 }
 async function releaseWakeLock() {
     if (!wakeLock) return;
@@ -96,9 +101,7 @@ function startWakeLockWatchdog() {
     stopWakeLockWatchdog();
     wakeLockRetryId = setInterval(() => {
         if (tickId === null) { stopWakeLockWatchdog(); return; }
-        if (wakeLock === null && document.visibilityState === "visible") {
-            requestWakeLock();
-        }
+        if (wakeLock === null && document.visibilityState === "visible") requestWakeLock();
     }, 1000);
 }
 function stopWakeLockWatchdog() {
@@ -106,7 +109,7 @@ function stopWakeLockWatchdog() {
 }
 
 /* =========================================================
-   波の音（Web Audio API で生成）
+   環境音（Web Audio API で生成）
    ========================================================= */
 function getAudioCtx() {
     if (!audioCtx) {
@@ -116,16 +119,11 @@ function getAudioCtx() {
     return audioCtx;
 }
 
-function startWaveSound() {
-    if (wavePlaying) return;
-    const ctx = getAudioCtx();
-
-    // ピンクノイズ風のバッファを生成
-    const bufferSize = 2 * ctx.sampleRate;
-    const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-    const output = noiseBuffer.getChannelData(0);
-
-    // ピンクノイズ生成（1/f ゆらぎ）
+/* ピンクノイズを生成 */
+function createPinkNoise(ctx, seconds = 2) {
+    const bufferSize = seconds * ctx.sampleRate;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
     let b0=0, b1=0, b2=0, b3=0, b4=0, b5=0, b6=0;
     for (let i = 0; i < bufferSize; i++) {
         const white = Math.random() * 2 - 1;
@@ -135,25 +133,73 @@ function startWaveSound() {
         b3 = 0.86650 * b3 + white * 0.3104856;
         b4 = 0.55000 * b4 + white * 0.5329522;
         b5 = -0.7616 * b5 - white * 0.0168980;
-        output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
+        data[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.11;
         b6 = white * 0.115926;
     }
+    return buffer;
+}
 
-    // ノイズソース
+/* 雨音 */
+function createRainSound() {
+    const ctx = getAudioCtx();
+    const buffer = createPinkNoise(ctx, 3);
+
     const noise = ctx.createBufferSource();
-    noise.buffer = noiseBuffer;
+    noise.buffer = buffer;
     noise.loop = true;
 
-    // ローパスフィルター（波のこもった音）
-    const filter = ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.value = 500;
-    filter.Q.value = 0.7;
+    // 高域を少し残す（雨らしさ）
+    const highpass = ctx.createBiquadFilter();
+    highpass.type = "highpass";
+    highpass.frequency.value = 400;
+    highpass.Q.value = 0.5;
 
-    // ゆっくり振幅を揺らす（波の寄せ引き）
+    // 低域を削る
+    const lowpass = ctx.createBiquadFilter();
+    lowpass.type = "lowpass";
+    lowpass.frequency.value = 6000;
+
+    // ゆらぎ（雨脚の変化）
     const lfo = ctx.createOscillator();
     lfo.type = "sine";
-    lfo.frequency.value = 0.08;   // 12秒周期
+    lfo.frequency.value = 0.15;
+
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = 0.15;
+    lfo.connect(lfoGain);
+
+    const mainGain = ctx.createGain();
+    mainGain.gain.value = 0.35;
+    lfoGain.connect(mainGain.gain);
+
+    noise.connect(highpass);
+    highpass.connect(lowpass);
+    lowpass.connect(mainGain);
+    mainGain.connect(ctx.destination);
+
+    noise.start(0);
+    lfo.start(0);
+
+    return { sources: [noise, lfo], mainGain };
+}
+
+/* 波の音 */
+function createWaveSound() {
+    const ctx = getAudioCtx();
+    const buffer = createPinkNoise(ctx, 3);
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    noise.loop = true;
+
+    const lowpass = ctx.createBiquadFilter();
+    lowpass.type = "lowpass";
+    lowpass.frequency.value = 500;
+    lowpass.Q.value = 0.7;
+
+    const lfo = ctx.createOscillator();
+    lfo.type = "sine";
+    lfo.frequency.value = 0.08;
 
     const lfoGain = ctx.createGain();
     lfoGain.gain.value = 0.35;
@@ -163,97 +209,191 @@ function startWaveSound() {
     mainGain.gain.value = 0.25;
     lfoGain.connect(mainGain.gain);
 
-    noise.connect(filter);
-    filter.connect(mainGain);
+    noise.connect(lowpass);
+    lowpass.connect(mainGain);
     mainGain.connect(ctx.destination);
 
     noise.start(0);
     lfo.start(0);
 
-    waveNodes = { noise, filter, lfo, lfoGain, mainGain };
-    wavePlaying = true;
-    console.log("[Wave] 再生開始");
+    return { sources: [noise, lfo], mainGain };
 }
 
-function stopWaveSound() {
-    if (!wavePlaying || !waveNodes) return;
+/* 焚き火の音 */
+function createFireSound() {
+    const ctx = getAudioCtx();
+    const buffer = createPinkNoise(ctx, 3);
+
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    noise.loop = true;
+
+    const lowpass = ctx.createBiquadFilter();
+    lowpass.type = "lowpass";
+    lowpass.frequency.value = 800;
+
+    const mainGain = ctx.createGain();
+    mainGain.gain.value = 0.2;
+
+    // パチパチ音
+    const cracklerId = setInterval(() => {
+        if (!soundNodes) return;
+        const osc = ctx.createOscillator();
+        const g = ctx.createGain();
+        osc.type = "square";
+        osc.frequency.value = 800 + Math.random() * 1200;
+
+        const t = ctx.currentTime;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.02 * Math.random(), t + 0.005);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+
+        osc.connect(g);
+        g.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.06);
+    }, 250 + Math.random() * 400);
+
+    noise.connect(lowpass);
+    lowpass.connect(mainGain);
+    mainGain.connect(ctx.destination);
+
+    noise.start(0);
+
+    return { sources: [noise], mainGain, cracklerId };
+}
+
+/* 音を開始 */
+function startSound(type) {
+    stopSound();
+    if (type === "none") return;
+
+    let nodes;
+    if (type === "rain") nodes = createRainSound();
+    else if (type === "wave") nodes = createWaveSound();
+    else if (type === "fire") nodes = createFireSound();
+
+    soundNodes = nodes;
+    currentSound = type;
+    console.log("[Sound] 再生:", type);
+}
+
+/* 音を停止 */
+function stopSound() {
+    if (!soundNodes) return;
     try {
-        waveNodes.noise.stop();
-        waveNodes.lfo.stop();
+        soundNodes.sources.forEach((s) => s.stop());
+        if (soundNodes.cracklerId) clearInterval(soundNodes.cracklerId);
     } catch (e) {}
-    waveNodes = null;
-    wavePlaying = false;
-    console.log("[Wave] 停止");
+    soundNodes = null;
+    currentSound = "none";
+    console.log("[Sound] 停止");
 }
 
-waveToggle?.addEventListener("click", () => {
-    if (wavePlaying) {
-        stopWaveSound();
-        waveToggle.textContent = "🌊 波の音を流す";
-        waveToggle.setAttribute("aria-pressed", "false");
-    } else {
-        startWaveSound();
-        waveToggle.textContent = "🌊 波の音を止める";
-        waveToggle.setAttribute("aria-pressed", "true");
-    }
+/* 環境音ピッカーのクリック */
+soundBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+        soundBtns.forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        const type = btn.dataset.sound;
+        localStorage.setItem("preferredSound", type);
+
+        // 休憩中なら即座に切り替え
+        if (tickId !== null) {
+            startSound(type);
+        } else {
+            currentSound = type;
+        }
+    });
 });
 
 /* =========================================================
    呼吸ガイド（4-7-8呼吸法）
    ========================================================= */
-function startBreathGuide() {
-    stopBreathGuide();
-    breathCycleCount = 0;
-    runBreathCycle();
+function setPhase(phase, label, instruction) {
+    breathPhaseState = phase;
+    if (breathCircle) {
+        breathCircle.classList.remove("inhale", "hold", "exhale");
+        breathCircle.classList.add(phase);
+    }
+    if (breathCountdown) {
+        breathCountdown.classList.remove("inhale", "hold", "exhale");
+        breathCountdown.classList.add(phase);
+    }
+    if (breathPhase) {
+        breathPhase.classList.remove("inhale", "hold", "exhale");
+        breathPhase.classList.add(phase);
+        breathPhase.textContent = label;
+    }
+    if (phaseDot) {
+        phaseDot.classList.remove("inhale", "hold", "exhale");
+        phaseDot.classList.add(phase);
+    }
+    if (breathInstruction) breathInstruction.textContent = instruction;
+}
+
+function startCountdown(seconds) {
+    if (breathCountdownId) clearInterval(breathCountdownId);
+    if (!breathCountdown) return;
+    breathCountdown.hidden = false;
+    let remaining = seconds;
+    breathCountdown.textContent = remaining;
+    breathCountdownId = setInterval(() => {
+        remaining--;
+        if (remaining > 0) {
+            breathCountdown.textContent = remaining;
+        } else {
+            clearInterval(breathCountdownId);
+        }
+    }, 1000);
 }
 
 function runBreathCycle() {
-    if (!breathCircle || !breathText) return;
+    if (!breathCircle) return;
+    if (breathCycleCount > 0 && breathCounter) {
+        breathCounter.textContent = `${breathCycleCount + 1}回目`;
+    }
 
     // フェーズ1: 吸う（4秒）
-    breathPhase = "inhale";
-    breathCircle.classList.add("active");
-    breathCircle.classList.remove("hold", "exhale");
-    breathCircle.classList.add("inhale");
-    breathText.textContent = "吸って…";
+    setPhase("inhale", "吸う", "鼻からゆっくり吸って…");
+    startCountdown(BREATH_INHALE);
 
     breathTimerId = setTimeout(() => {
         // フェーズ2: 止める（7秒）
-        breathPhase = "hold";
-        breathCircle.classList.remove("inhale");
-        breathCircle.classList.add("hold");
-        breathText.textContent = "止めて…";
+        setPhase("hold", "止める", "そのまま止めて…");
+        startCountdown(BREATH_HOLD);
 
         breathTimerId = setTimeout(() => {
             // フェーズ3: 吐く（8秒）
-            breathPhase = "exhale";
-            breathCircle.classList.remove("hold");
-            breathCircle.classList.add("exhale");
-            breathText.textContent = "吐いて…";
+            setPhase("exhale", "吐く", "口からゆっくり吐いて…");
+            startCountdown(BREATH_EXHALE);
 
             breathTimerId = setTimeout(() => {
                 breathCycleCount++;
-                // 休憩中なら繰り返す
-                if (tickId !== null) {
-                    runBreathCycle();
-                }
-            }, 8000);
-        }, 7000);
-    }, 4000);
+                if (tickId !== null) runBreathCycle();
+            }, BREATH_EXHALE * 1000);
+        }, BREATH_HOLD * 1000);
+    }, BREATH_INHALE * 1000);
+}
+
+function startBreathGuide() {
+    stopBreathGuide();
+    breathCycleCount = 0;
+    if (breathCircle) breathCircle.classList.add("active");
+    if (breathPanel) breathPanel.hidden = false;
+    if (breathCounter) breathCounter.textContent = "1回目";
+    runBreathCycle();
 }
 
 function stopBreathGuide() {
-    if (breathTimerId) {
-        clearTimeout(breathTimerId);
-        breathTimerId = null;
+    if (breathTimerId) { clearTimeout(breathTimerId); breathTimerId = null; }
+    if (breathCountdownId) { clearInterval(breathCountdownId); breathCountdownId = null; }
+    if (breathCircle) breathCircle.classList.remove("active", "inhale", "hold", "exhale");
+    if (breathCountdown) {
+        breathCountdown.hidden = true;
+        breathCountdown.classList.remove("inhale", "hold", "exhale");
     }
-    if (breathCircle) {
-        breathCircle.classList.remove("active", "inhale", "hold", "exhale");
-    }
-    if (breathText) {
-        breathText.hidden = true;
-        breathText.textContent = "";
-    }
+    if (breathPanel) breathPanel.hidden = true;
 }
 
 /* =========================================================
@@ -305,7 +445,7 @@ async function sendNotification(t, body, options = {}) {
         icon: "icons/icon-192.png",
         badge: "icons/icon-192.png",
         tag: options.tag || "hitoyasumi-" + Date.now(),
-        silent: true,   // 通知音を鳴らさない
+        silent: true,
         ...options,
     };
 
@@ -316,9 +456,7 @@ async function sendNotification(t, body, options = {}) {
         } else {
             new Notification(t, opts);
         }
-    } catch (err) {
-        console.warn("[通知] 失敗:", err);
-    }
+    } catch (err) {}
 }
 
 notifyToggle?.addEventListener("click", async () => {
@@ -362,15 +500,12 @@ applyCustom?.addEventListener("click", () => {
 });
 
 /* =========================================================
-   タイマー表示
+   タイマー
    ========================================================= */
 function updateTimer() {
     let remaining = REST_DURATION;
-    if (endTime) {
-        remaining = Math.max(0, Math.round((endTime - Date.now()) / 1000));
-    } else if (pausedTimeLeft !== null) {
-        remaining = pausedTimeLeft;
-    }
+    if (endTime) remaining = Math.max(0, Math.round((endTime - Date.now()) / 1000));
+    else if (pausedTimeLeft !== null) remaining = pausedTimeLeft;
     const m = Math.floor(remaining / 60);
     const s = remaining % 60;
     timer.textContent = String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
@@ -383,7 +518,6 @@ function updateTimer() {
    ========================================================= */
 async function startRest(fromResume = false) {
     if (tickId !== null) return;
-
     let duration;
     if (fromResume && pausedTimeLeft !== null && pausedTimeLeft > 0) {
         duration = pausedTimeLeft;
@@ -391,7 +525,6 @@ async function startRest(fromResume = false) {
     } else {
         duration = REST_DURATION;
     }
-
     endTime = Date.now() + duration * 1000;
     localStorage.setItem("restEndTime", endTime);
 
@@ -401,7 +534,6 @@ async function startRest(fromResume = false) {
     resetButton.hidden = true;
     stopButton.hidden = false;
     continueButton.style.display = "none";
-    waveToggle.hidden = false;
     document.querySelector(".timer-wrap").classList.add("pulse");
 
     title.textContent = "休憩中…";
@@ -410,14 +542,11 @@ async function startRest(fromResume = false) {
     message.classList.remove("fade-in");
 
     // 呼吸ガイド開始
-    if (breathText) breathText.hidden = false;
     startBreathGuide();
 
-    // 波の音を自動開始
-    if (!wavePlaying) {
-        startWaveSound();
-        waveToggle.textContent = "🌊 波の音を止める";
-        waveToggle.setAttribute("aria-pressed", "true");
+    // 環境音を自動開始
+    if (currentSound !== "none") {
+        startSound(currentSound);
     }
 
     await requestWakeLock();
@@ -429,7 +558,6 @@ async function startRest(fromResume = false) {
             reg.active?.postMessage({ type: "SCHEDULE_REST_END", endTime, duration });
         } catch (err) {}
     }
-
     startTicking();
 }
 
@@ -454,6 +582,7 @@ function finishRest() {
     releaseWakeLock();
     stopWakeLockWatchdog();
     stopBreathGuide();
+    stopSound();
 
     timer.textContent = "00:00";
     document.querySelector(".timer-wrap").classList.remove("pulse");
@@ -462,22 +591,14 @@ function finishRest() {
     title.classList.add("fade-in");
     message.innerHTML = "自分のための時間を過ごしました。<br>また自分のペースで過ごしましょう。";
     message.classList.add("fade-in");
-
     status.textContent = "休憩完了 🌿";
     restButton.hidden = true;
     restButton.disabled = false;
     resetButton.hidden = false;
     stopButton.hidden = true;
     continueButton.style.display = "block";
-    waveToggle.hidden = true;
 
-    // 波の音を停止
-    stopWaveSound();
-
-    // 祝福エフェクト
     showCelebration();
-
-    // 通知（音は鳴らさない）
     sendNotification("休憩おつかれさま 🌿", "休憩時間が終わりました。");
 }
 
@@ -495,7 +616,7 @@ function stopRest() {
     releaseWakeLock();
     stopWakeLockWatchdog();
     stopBreathGuide();
-    stopWaveSound();
+    stopSound();
     document.querySelector(".timer-wrap").classList.remove("pulse");
 
     title.textContent = "休憩を一時停止しました";
@@ -507,12 +628,9 @@ function stopRest() {
     resetButton.hidden = false;
     stopButton.hidden = true;
     continueButton.style.display = "block";
-    waveToggle.hidden = true;
-    waveToggle.textContent = "🌊 波の音を流す";
-    waveToggle.setAttribute("aria-pressed", "false");
 }
 
-/* ---------- ボタンイベント ---------- */
+/* ---------- ボタン ---------- */
 restButton?.addEventListener("click", () => startRest(false));
 stopButton?.addEventListener("click", stopRest);
 resetButton?.addEventListener("click", () => {
@@ -534,11 +652,10 @@ continueButton?.addEventListener("click", () => {
     continueButton.style.display = "none";
     notifyToggle.style.display = "none";
     scheduleButton.style.display = "none";
+    soundPicker.style.display = "none";
 });
 
-/* =========================================================
-   復帰チェック
-   ========================================================= */
+/* ---------- 復帰チェック ---------- */
 function checkRestOnReturn() {
     const saved = localStorage.getItem("restEndTime");
     if (!saved) return;
@@ -554,17 +671,14 @@ function checkRestOnReturn() {
         continueButton.style.display = "none";
         resetButton.hidden = true;
         stopButton.hidden = false;
-        waveToggle.hidden = false;
-        if (breathText) breathText.hidden = false;
         startBreathGuide();
+        if (currentSound !== "none") startSound(currentSound);
         startTicking();
         startWakeLockWatchdog();
     }
 }
 
-/* =========================================================
-   通知時刻リスト
-   ========================================================= */
+/* ---------- 通知時刻リスト ---------- */
 function renderTimesList(times) {
     timesList.innerHTML = "";
     if (!times.length) {
@@ -597,20 +711,16 @@ function renderTimesList(times) {
         timesList.appendChild(row);
     });
 }
-
 function getCurrentTimes() {
     return Array.from(timesList.querySelectorAll('input[type="time"]'))
-        .map((i) => i.value)
-        .filter(Boolean);
+        .map((i) => i.value).filter(Boolean);
 }
-
 addTimeBtn?.addEventListener("click", () => {
     const existing = getCurrentTimes();
     const all = [...existing, "12:00"];
     renderTimesList(all);
     updateScheduleInfo();
 });
-
 quickBtns.forEach((btn) => {
     btn.addEventListener("click", () => {
         const preset = btn.dataset.preset;
@@ -628,9 +738,7 @@ quickBtns.forEach((btn) => {
     });
 });
 
-/* =========================================================
-   通知スケジュール
-   ========================================================= */
+/* ---------- 通知スケジュール ---------- */
 function loadScheduleSettings() {
     const saved = JSON.parse(localStorage.getItem("scheduleSettings") || "{}");
     const times = saved.times || ["10:00", "14:00", "18:00"];
@@ -638,35 +746,29 @@ function loadScheduleSettings() {
     scheduleEnabled.checked = !!saved.enabled;
     updateScheduleInfo();
 }
-
 function saveScheduleSettings() {
     const times = getCurrentTimes();
     const settings = { times, enabled: scheduleEnabled.checked };
     localStorage.setItem("scheduleSettings", JSON.stringify(settings));
-    const todayKey = "firedTimes_" + new Date().toDateString();
-    localStorage.removeItem(todayKey);
+    localStorage.removeItem("firedTimes_" + new Date().toDateString());
     updateScheduleInfo();
     return settings;
 }
-
 function updateScheduleInfo() {
     const times = getCurrentTimes();
     if (!scheduleEnabled.checked) { scheduleInfo.textContent = "現在オフです。"; return; }
     if (!times.length) { scheduleInfo.textContent = "時刻が未設定です。"; return; }
     scheduleInfo.textContent = `1日 ${times.length} 回、指定時刻に通知します。`;
 }
-
 scheduleButton?.addEventListener("click", () => {
     loadScheduleSettings();
     scheduleModal.hidden = false;
 });
-
 scheduleSave?.addEventListener("click", () => {
     saveScheduleSettings();
     scheduleModal.hidden = true;
     status.textContent = "スケジュールを保存しました。";
 });
-
 scheduleEnabled?.addEventListener("change", updateScheduleInfo);
 
 function checkScheduledReminders() {
@@ -674,8 +776,7 @@ function checkScheduledReminders() {
     if (!settings.enabled || !settings.times?.length) return;
     const now = new Date();
     const nowMin = now.getHours() * 60 + now.getMinutes();
-    const todayKey = now.toDateString();
-    const firedKey = "firedTimes_" + todayKey;
+    const firedKey = "firedTimes_" + now.toDateString();
     const fired = JSON.parse(localStorage.getItem(firedKey) || "[]");
     for (const t of settings.times) {
         if (fired.includes(t)) continue;
@@ -689,18 +790,14 @@ function checkScheduledReminders() {
     }
 }
 
-/* =========================================================
-   祝福エフェクト
-   ========================================================= */
+/* ---------- 祝福エフェクト ---------- */
 function showCelebration() {
     if (!celebration) return;
     celebration.hidden = false;
     setTimeout(() => { celebration.hidden = true; }, 1500);
 }
 
-/* =========================================================
-   時間帯ごとの挨拶
-   ========================================================= */
+/* ---------- 時間帯挨拶 ---------- */
 function updateGreeting() {
     const hour = new Date().getHours();
     let text = "今日もおつかれさま";
@@ -712,18 +809,12 @@ function updateGreeting() {
     if (greetingEl) greetingEl.textContent = text;
 }
 
-/* =========================================================
-   タイマー円タップで開始
-   ========================================================= */
+/* ---------- タイマー円タップ ---------- */
 timerWrap?.addEventListener("click", () => {
-    if (tickId === null && restButton && !restButton.hidden) {
-        startRest(false);
-    }
+    if (tickId === null && restButton && !restButton.hidden) startRest(false);
 });
 
-/* =========================================================
-   iPhone 用ホーム画面追加案内
-   ========================================================= */
+/* ---------- iPhone 案内 ---------- */
 function shouldShowIosHint() {
     if (!isiOS()) return false;
     if (isInStandaloneMode()) return false;
@@ -744,9 +835,7 @@ window.addEventListener("appinstalled", () => {
     localStorage.setItem("iosHintDismissed", "1");
 });
 
-/* =========================================================
-   復帰トリガー
-   ========================================================= */
+/* ---------- 復帰トリガー ---------- */
 document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible") {
         checkRestOnReturn();
@@ -760,9 +849,7 @@ window.addEventListener("focus", () => {
     if (tickId !== null) requestWakeLock();
 });
 
-/* =========================================================
-   初期化
-   ========================================================= */
+/* ---------- 初期化 ---------- */
 function restoreSettings() {
     const savedDur = parseInt(localStorage.getItem("restDuration") || "0", 10);
     if (savedDur >= 60) {
@@ -774,6 +861,13 @@ function restoreSettings() {
         });
         restButton.textContent = `${m}分休む`;
     }
+    // 環境音の復元
+    const savedSound = localStorage.getItem("preferredSound") || "none";
+    currentSound = savedSound;
+    soundBtns.forEach((b) => {
+        b.classList.toggle("active", b.dataset.sound === savedSound);
+    });
+    // 通知
     if (localStorage.getItem("notifyEnabled") === "1" &&
         "Notification" in window &&
         Notification.permission === "granted") {
@@ -789,7 +883,6 @@ checkRestOnReturn();
 checkScheduledReminders();
 updateGreeting();
 setInterval(updateGreeting, 60 * 60 * 1000);
-
 setInterval(checkScheduledReminders, 60 * 1000);
 
 if ("serviceWorker" in navigator && location.protocol !== "file:") {
