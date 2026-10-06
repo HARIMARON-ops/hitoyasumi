@@ -4,23 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#000000">
-    <meta name="description" content="雨音と4-7-8呼吸法で、心を整える休憩アプリ">
+    <meta name="description" content="波の音と4-7-8呼吸法で、心を整える休憩アプリ">
 
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ひとやすみ">
 
-    <meta property="og:title" content="ひとやすみ 🌧">
-    <meta property="og:description" content="雨音と呼吸法で、心を整える休憩アプリ">
+    <meta property="og:title" content="ひとやすみ 🌊">
+    <meta property="og:description" content="波の音と呼吸法で、心を整える休憩アプリ">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://harimaron-ops.github.io/hitoyasumi/">
     <meta property="og:image" content="https://harimaron-ops.github.io/hitoyasumi/icons/icon-512.png">
     <meta property="og:site_name" content="ひとやすみ">
 
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="ひとやすみ 🌧">
-    <meta name="twitter:description" content="雨音と呼吸法で、心を整える休憩アプリ">
+    <meta name="twitter:title" content="ひとやすみ 🌊">
+    <meta name="twitter:description" content="波の音と呼吸法で、心を整える休憩アプリ">
     <meta name="twitter:image" content="https://harimaron-ops.github.io/hitoyasumi/icons/icon-512.png">
 
     <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -38,7 +38,7 @@
         <p class="greeting" id="greeting">今日もおつかれさま</p>
         <h1 id="title">少し、休みませんか？</h1>
         <p id="message" class="message">
-            呼吸を整えて、心を静める時間。<br>
+            波の音に耳を澄ませて、呼吸を整える時間。<br>
             あなたのためのひとやすみを。
         </p>
 
@@ -87,8 +87,11 @@
                 <!-- 呼吸ガイド: パーティクル -->
                 <div class="breath-particles" id="breathParticles"></div>
 
-                <!-- カウントダウン -->
-                <div id="breathCountdown" class="breath-countdown" hidden></div>
+                <!-- カウントダウン（秒付き） -->
+                <div id="breathCountdown" class="breath-countdown" hidden>
+                    <span class="countdown-num">4</span>
+                    <span class="countdown-unit">秒</span>
+                </div>
 
                 <!-- タイマー -->
                 <div id="timer" class="timer" role="timer" aria-live="polite">05:00</div>
@@ -100,15 +103,15 @@
                     <span class="breath-phase-dot" id="phaseDot"></span>
                     <span class="breath-phase-label" id="breathPhase">吸う</span>
                 </div>
-                <p class="breath-instruction" id="breathInstruction">鼻からゆっくり吸って…</p>
+                <p class="breath-instruction" id="breathInstruction">鼻から4秒吸って…</p>
                 <p class="breath-counter" id="breathCounter">1回目</p>
             </div>
 
-            <!-- 環境音（雨のみ） -->
+            <!-- 環境音（波のみ） -->
             <div class="sound-picker single" id="soundPicker" role="group" aria-label="環境音">
-                <button class="sound-btn active" type="button" data-sound="rain">
-                    <span class="sound-icon">🌧</span>
-                    <span class="sound-name">雨音を止める</span>
+                <button class="sound-btn active" type="button" data-sound="wave">
+                    <span class="sound-icon">🌊</span>
+                    <span class="sound-name">波の音を止める</span>
                 </button>
             </div>
 
@@ -195,7 +198,7 @@
 
         <!-- 完了時の祝福エフェクト -->
         <div id="celebration" class="celebration" hidden>
-            <div class="celebration-text">🌿 おつかれさま</div>
+            <div class="celebration-text">🌿 お疲れさま</div>
         </div>
 
     </main>

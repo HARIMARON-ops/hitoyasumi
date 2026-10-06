@@ -1,5 +1,5 @@
 /* =========================================================
-   ひとやすみ - メインスクリプト (完全版 v3)
+   ひとやすみ - メインスクリプト (波の音 + 秒付き呼吸ガイド)
    ========================================================= */
 
 const timer           = document.getElementById("timer");
@@ -60,7 +60,7 @@ let breathCountdownId = null;
 let breathCycleCount = 0;
 
 let audioCtx         = null;
-let currentSound     = "rain";
+let currentSound     = "wave";
 let soundNodes       = null;
 
 if (progressCircle) progressCircle.style.strokeDasharray = CIRCUMFERENCE;
@@ -100,14 +100,14 @@ function stopWakeLockWatchdog() {
     if (wakeLockRetryId) { clearInterval(wakeLockRetryId); wakeLockRetryId = null; }
 }
 
-/* ---------- 環境音（雨のみ） ---------- */
+/* ---------- 環境音（波のみ・自然な寄せ引き） ---------- */
 function getAudioCtx() {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     if (audioCtx.state === "suspended") audioCtx.resume();
     return audioCtx;
 }
 
-function createPinkNoise(ctx, seconds = 4) {
+function createPinkNoise(ctx, seconds = 5) {
     const bufferSize = seconds * ctx.sampleRate;
     const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
     const data = buffer.getChannelData(0);
@@ -126,62 +126,71 @@ function createPinkNoise(ctx, seconds = 4) {
     return buffer;
 }
 
-function createRainSound() {
+function createWaveSound() {
     const ctx = getAudioCtx();
-    const buffer = createPinkNoise(ctx, 4);
+    const buffer = createPinkNoise(ctx, 5);
     const noise = ctx.createBufferSource();
     noise.buffer = buffer;
     noise.loop = true;
 
+    // 深い海: 低域を残す
     const lp = ctx.createBiquadFilter();
-    lp.type = "lowpass"; lp.frequency.value = 3500; lp.Q.value = 0.5;
+    lp.type = "lowpass";
+    lp.frequency.value = 600;
+    lp.Q.value = 0.6;
 
     const hp = ctx.createBiquadFilter();
-    hp.type = "highpass"; hp.frequency.value = 200;
+    hp.type = "highpass";
+    hp.frequency.value = 60;
 
+    // メインの寄せ引き（8秒周期・強め）
     const lfo1 = ctx.createOscillator();
-    lfo1.type = "sine"; lfo1.frequency.value = 0.07;
-    const lfo1Gain = ctx.createGain(); lfo1Gain.gain.value = 0.12;
+    lfo1.type = "sine";
+    lfo1.frequency.value = 0.125;   // 8秒周期
+    const lfo1Gain = ctx.createGain();
+    lfo1Gain.gain.value = 0.45;
     lfo1.connect(lfo1Gain);
 
+    // サブの揺らぎ（17秒周期・弱め）で不規則感
     const lfo2 = ctx.createOscillator();
-    lfo2.type = "sine"; lfo2.frequency.value = 0.23;
-    const lfo2Gain = ctx.createGain(); lfo2Gain.gain.value = 0.06;
+    lfo2.type = "sine";
+    lfo2.frequency.value = 0.06;
+    const lfo2Gain = ctx.createGain();
+    lfo2Gain.gain.value = 0.2;
     lfo2.connect(lfo2Gain);
 
+    // 泡のはじける感じ（細かい揺らぎ）
+    const lfo3 = ctx.createOscillator();
+    lfo3.type = "sine";
+    lfo3.frequency.value = 0.8;
+    const lfo3Gain = ctx.createGain();
+    lfo3Gain.gain.value = 0.04;
+    lfo3.connect(lfo3Gain);
+
     const mainGain = ctx.createGain();
-    mainGain.gain.value = 0.32;
+    mainGain.gain.value = 0.28;
     lfo1Gain.connect(mainGain.gain);
     lfo2Gain.connect(mainGain.gain);
+    lfo3Gain.connect(mainGain.gain);
 
-    noise.connect(hp); hp.connect(lp); lp.connect(mainGain);
+    noise.connect(hp);
+    hp.connect(lp);
+    lp.connect(mainGain);
     mainGain.connect(ctx.destination);
-    noise.start(0); lfo1.start(0); lfo2.start(0);
 
-    // 遠くの雷
-    let thunderTimerId = setInterval(() => {
-        if (!soundNodes) return;
-        const osc = ctx.createOscillator();
-        const g = ctx.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(60, ctx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(30, ctx.currentTime + 1.5);
-        const t = ctx.currentTime;
-        g.gain.setValueAtTime(0, t);
-        g.gain.linearRampToValueAtTime(0.06 * Math.random(), t + 0.3);
-        g.gain.exponentialRampToValueAtTime(0.0001, t + 2.5);
-        osc.connect(g); g.connect(ctx.destination);
-        osc.start(t); osc.stop(t + 2.5);
-    }, 12000 + Math.random() * 15000);
+    noise.start(0);
+    lfo1.start(0);
+    lfo2.start(0);
+    lfo3.start(0);
 
-    return { sources: [noise, lfo1, lfo2], thunderTimerId };
+    return { sources: [noise, lfo1, lfo2, lfo3] };
 }
 
 function startSound(type) {
     stopSound();
-    if (type === "rain") {
-        soundNodes = createRainSound();
-        currentSound = "rain";
+    if (type === "wave") {
+        soundNodes = createWaveSound();
+        currentSound = "wave";
     }
 }
 
@@ -189,7 +198,6 @@ function stopSound() {
     if (!soundNodes) return;
     try {
         soundNodes.sources.forEach((s) => s.stop());
-        if (soundNodes.thunderTimerId) clearInterval(soundNodes.thunderTimerId);
     } catch (e) {}
     soundNodes = null;
 }
@@ -205,20 +213,20 @@ soundBtns.forEach((btn) => {
             currentSound = "none";
             if (tickId !== null) stopSound();
             const nameEl = btn.querySelector(".sound-name");
-            if (nameEl) nameEl.textContent = "雨音を流す";
+            if (nameEl) nameEl.textContent = "波の音を流す";
         } else {
             btn.classList.add("active");
-            localStorage.setItem("preferredSound", "rain");
-            currentSound = "rain";
-            if (tickId !== null) startSound("rain");
+            localStorage.setItem("preferredSound", "wave");
+            currentSound = "wave";
+            if (tickId !== null) startSound("wave");
             const nameEl = btn.querySelector(".sound-name");
-            if (nameEl) nameEl.textContent = "雨音を止める";
+            if (nameEl) nameEl.textContent = "波の音を止める";
         }
     });
 });
 
 /* ---------- 呼吸ガイド ---------- */
-function setPhase(phase, label, instruction) {
+function setPhase(phase, label, instruction, countdownNum, countdownUnit) {
     if (breathCircle) {
         breathCircle.classList.remove("inhale", "hold", "exhale");
         breathCircle.classList.add(phase);
@@ -249,16 +257,23 @@ function setPhase(phase, label, instruction) {
     else if (phase === "exhale") spawnParticles("exhale", 10);
 }
 
+/* カウントダウン（秒付き） */
 function startCountdown(seconds) {
     if (breathCountdownId) clearInterval(breathCountdownId);
     if (!breathCountdown) return;
     breathCountdown.hidden = false;
+    
+    const numEl = breathCountdown.querySelector(".countdown-num");
+    if (numEl) numEl.textContent = seconds;
+
     let remaining = seconds;
-    breathCountdown.textContent = remaining;
     breathCountdownId = setInterval(() => {
         remaining--;
-        if (remaining > 0) breathCountdown.textContent = remaining;
-        else clearInterval(breathCountdownId);
+        if (remaining > 0 && numEl) {
+            numEl.textContent = remaining;
+        } else {
+            clearInterval(breathCountdownId);
+        }
     }, 1000);
 }
 
@@ -293,15 +308,15 @@ function runBreathCycle() {
     if (!breathCircle) return;
     if (breathCounter) breathCounter.textContent = `${breathCycleCount + 1}回目`;
 
-    setPhase("inhale", "吸う", "鼻からゆっくり吸って…");
+    setPhase("inhale", "吸う", "鼻から4秒吸って…");
     startCountdown(BREATH_INHALE);
 
     breathTimerId = setTimeout(() => {
-        setPhase("hold", "止める", "そのまま止めて…");
+        setPhase("hold", "止める", "そのまま7秒止めて…");
         startCountdown(BREATH_HOLD);
 
         breathTimerId = setTimeout(() => {
-            setPhase("exhale", "吐く", "口からゆっくり吐いて…");
+            setPhase("exhale", "吐く", "口から8秒ゆっくり吐いて…");
             startCountdown(BREATH_EXHALE);
 
             breathTimerId = setTimeout(() => {
@@ -473,11 +488,11 @@ async function startRest(fromResume = false) {
 
     title.textContent = "休憩中…";
     title.classList.remove("fade-in");
-    message.innerHTML = "呼吸を整えながら、ゆっくり過ごしましょう。";
+    message.innerHTML = "波の音に耳を澄ませながら、呼吸を整えましょう。";
     message.classList.remove("fade-in");
 
     startBreathGuide();
-    if (currentSound !== "none") startSound("rain");
+    if (currentSound !== "none") startSound("wave");
 
     await requestWakeLock();
     startWakeLockWatchdog();
@@ -515,7 +530,7 @@ function finishRest() {
     timer.textContent = "00:00";
     document.querySelector(".timer-wrap").classList.remove("pulse");
 
-    title.textContent = "お疲れさま 🌿";
+    title.textContent = "お疲れさま";
     title.classList.add("fade-in");
     message.innerHTML = "自分のための時間を過ごしました。<br>また自分のペースで過ごしましょう。";
     message.classList.add("fade-in");
@@ -527,7 +542,7 @@ function finishRest() {
     continueButton.style.display = "block";
 
     showCelebration();
-    sendNotification("ゆっくり休めましたか？");
+    sendNotification("お疲れさま 🌿", "ゆっくり休めましたか？");
 }
 
 /* ---------- ストップ ---------- */
@@ -549,7 +564,7 @@ function stopRest() {
     title.classList.add("fade-in");
     message.innerHTML = `残り <strong>${Math.floor(remaining / 60)}分${remaining % 60}秒</strong> です。<br>「続きから再開」で再開できます。`;
     message.classList.add("fade-in");
-    status.textContent = "おつかれさまでした 🌿";
+    status.textContent = "お疲れさま 🌿";
     restButton.hidden = true;
     resetButton.hidden = false;
     stopButton.hidden = true;
@@ -597,7 +612,7 @@ function checkRestOnReturn() {
         resetButton.hidden = true;
         stopButton.hidden = false;
         startBreathGuide();
-        if (currentSound !== "none") startSound("rain");
+        if (currentSound !== "none") startSound("wave");
         startTicking();
         startWakeLockWatchdog();
     }
@@ -786,18 +801,18 @@ function restoreSettings() {
         });
         restButton.textContent = `${m}分休む`;
     }
-    // 雨音の状態復元
+    // 波の音の状態復元
     const savedSound = localStorage.getItem("preferredSound");
-    const rainBtn = document.querySelector('.sound-btn[data-sound="rain"]');
-    const nameEl = rainBtn?.querySelector(".sound-name");
+    const waveBtn = document.querySelector('.sound-btn[data-sound="wave"]');
+    const nameEl = waveBtn?.querySelector(".sound-name");
     if (savedSound === "none") {
         currentSound = "none";
-        rainBtn?.classList.remove("active");
-        if (nameEl) nameEl.textContent = "雨音を流す";
+        waveBtn?.classList.remove("active");
+        if (nameEl) nameEl.textContent = "波の音を流す";
     } else {
-        currentSound = "rain";
-        rainBtn?.classList.add("active");
-        if (nameEl) nameEl.textContent = "雨音を止める";
+        currentSound = "wave";
+        waveBtn?.classList.add("active");
+        if (nameEl) nameEl.textContent = "波の音を止める";
     }
     // 通知
     if (localStorage.getItem("notifyEnabled") === "1" &&

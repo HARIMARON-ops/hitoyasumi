@@ -488,27 +488,48 @@ h1 {
     100% { opacity: 0; transform: translate(var(--x-start), var(--y-start)) scale(0.3); }
 }
 
+/* カウントダウン（秒付き） */
 .breath-countdown {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    font-size: 36px;
-    font-weight: 200;
-    color: rgba(255, 255, 255, 0.95);
+    display: flex;
+    align-items: baseline;
+    gap: 2px;
     pointer-events: none;
     z-index: 4;
-    font-variant-numeric: tabular-nums;
-    text-shadow: 0 0 20px currentColor, 0 0 40px currentColor;
     transition: color 0.6s ease;
-    opacity: 0.9;
-    letter-spacing: 0.05em;
+    opacity: 0.95;
 }
 
 .breath-countdown[hidden] { display: none; }
+
+.countdown-num {
+    font-size: 44px;
+    font-weight: 200;
+    color: rgba(255, 255, 255, 0.95);
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 20px currentColor, 0 0 40px currentColor;
+    letter-spacing: 0.05em;
+    line-height: 1;
+}
+
+.countdown-unit {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 0.1em;
+    padding-left: 2px;
+}
+
 .breath-countdown.inhale { color: #4ade80; }
 .breath-countdown.hold   { color: #22d3ee; }
 .breath-countdown.exhale { color: #a78bfa; }
+
+.breath-countdown.inhale .countdown-num { color: #4ade80; }
+.breath-countdown.hold   .countdown-num { color: #22d3ee; }
+.breath-countdown.exhale .countdown-num { color: #a78bfa; }
 
 .breath-panel {
     margin: -8px 0 20px;
